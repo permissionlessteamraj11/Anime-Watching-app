@@ -1,0 +1,88 @@
+
+> anime-verse@0.1.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use by an unknown process, using available port 3001 instead.
+   ▲ Next.js 15.5.19
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.0.2:3001
+   - Environments: .env
+
+ ✓ Starting...
+> [PWA] PWA support is disabled
+> [PWA] PWA support is disabled
+ ✓ Ready in 3.4s
+ ○ Compiling / ...
+ ✓ Compiled / in 11.3s (1497 modules)
+prisma:warn In production, we recommend using `prisma generate --no-engine` (See: `prisma generate --help`)
+ ⨯ Error [PrismaClientKnownRequestError]:
+Invalid `prisma.anime.findMany()` invocation:
+
+
+Cannot fetch data from service:
+fetch failed
+    at async getHomeData (src/app/page.tsx:8:54)
+    at async Home (src/app/page.tsx:20:56)
+   6 |
+   7 | async function getHomeData() {
+>  8 |   const [featured, trending, popular, newEpisodes] = await Promise.all([
+     |                                                      ^
+   9 |     prisma.anime.findMany({ take: 5, orderBy: { rating: "desc" }, include: { genres: true } }),
+  10 |     prisma.anime.findMany({ take: 10, orderBy: { createdAt: "desc" }, include: { genres: true } }),
+  11 |     prisma.anime.findMany({ take: 10, orderBy: { updatedAt: "desc" }, include: { genres: true } }), {
+  code: 'P5010',
+  meta: [Object],
+  clientVersion: '6.19.3',
+  digest: '833631353'
+}
+ HEAD / 500 in 14167ms
+ ○ Compiling /verify ...
+ ✓ Compiled /verify in 1030ms (1476 modules)
+ GET /verify 200 in 1699ms
+ ✓ Compiled in 1558ms (1462 modules)
+ GET /verify 200 in 652ms
+ ○ Compiling /verify/admin ...
+ ⨯ ./src/app/verify/admin/page.tsx:1:1
+Mod ✓ Compiled in 754ms (657 modules)
+ ✓ Compiled in 1590ms (1499 modules)
+ ✓ Compiled in 200ms (668 modules)
+ ✓ Compiled in 340ms (668 modules)
+ ✓ Compiled in 242ms (668 modules)
+ ✓ Compiled in 747ms (1485 modules)
+ ✓ Compiled in 235ms (668 modules)
+ ✓ Compiled in 185ms (668 modules)
+ ✓ Compiled in 252ms (1485 modules)
+ ✓ Compiled in 165ms (668 modules)
+ ✓ Compiled in 200ms (668 modules)
+ ✓ Compiled in 319ms (1485 modules)
+e not found: Can't resolve '@/components/admin/StatCard'
+> 1 | import StatCard from "@/components/admin/StatCard";
+    | ^
+  2 | import { Users, Tv, Play, Eye } from "lucide-react";
+  3 |
+  4 | export default function VerifyAdminPage() {
+
+https://nextjs.org/docs/messages/module-not-found
+ ⨯ ./src/app/verify/admin/page.tsx:1:1
+Module not found: Can't resolve '@/components/admin/StatCard'
+> 1 | import StatCard from "@/components/admin/StatCard";
+    | ^
+  2 | import { Users, Tv, Play, Eye } from "lucide-react";
+  3 |
+  4 | export default function VerifyAdminPage() {
+
+https://nextjs.org/docs/messages/module-not-found
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename '/app/.next/cache/webpack/client-development-fallback/0.pack.gz_' -> '/app/.next/cache/webpack/client-development-fallback/0.pack.gz'
+ ✓ Compiled /_error in 1899ms (918 modules)
+ ✓ Compiled in 290ms (810 modules)
+ ✓ Compiled in 218ms (810 modules)
+ ✓ Compiled in 435ms (810 modules)
+ ✓ Compiled in 275ms (810 modules)
+ ✓ Compiled in 1037ms (904 modules)
+ ✓ Compiled in 240ms (810 modules)
+ ✓ Compiled in 195ms (810 modules)
+ ✓ Compiled in 281ms (904 modules)
+ ✓ Compiled in 193ms (810 modules)
+ ✓ Compiled in 227ms (810 modules)
+ ✓ Compiled in 500ms (904 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename '/app/.next/cache/webpack/client-development/4.pack.gz_' -> '/app/.next/cache/webpack/client-development/4.pack.gz'

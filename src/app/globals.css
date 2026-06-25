@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --accent: #FF2D55;
+  --accent2: #00D4AA;
+  --surface: #141924;
+  --card: #1A2035;
+  --deepbg: #0A0E17;
+  --dim: #8892A4;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-accent2: var(--accent2);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-deepbg: var(--deepbg);
+  --color-dim: var(--dim);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0A0E17;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer base {
+  .font-heading {
+    font-family: var(--font-sans); /* Fallback, should use Space Grotesk if available */
+  }
+}
