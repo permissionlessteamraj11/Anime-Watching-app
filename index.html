@@ -1,0 +1,1737 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AnimeVerse Pro — Ultimate Anime Streaming</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        accent: '#FF2D55',
+        accent2: '#00D4AA',
+        surface: '#141924',
+        card: '#1A2035',
+        deepbg: '#0A0E17',
+        dim: '#8892A4',
+      },
+      fontFamily: {
+        heading: ['Space Grotesk', 'sans-serif'],
+        body: ['DM Sans', 'sans-serif'],
+      }
+    }
+  }
+}
+</script>
+<style>
+:root {
+  --accent: #FF2D55;
+  --accent2: #00D4AA;
+  --bg: #0A0E17;
+  --surface: #141924;
+  --card: #1A2035;
+  --border: #2A3050;
+  --text: #E8E8E8;
+  --muted: #8892A4;
+}
+.light-mode {
+  --bg: #F5F5F7;
+  --surface: #FFFFFF;
+  --card: #F0F0F2;
+  --border: #D1D5DB;
+  --text: #1A1A2E;
+  --muted: #6B7280;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* 粒子画布 */
+#particleCanvas {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 0; pointer-events: none;
+}
+
+/* 玻璃态 */
+.glass {
+  background: rgba(20, 25, 36, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.light-mode .glass {
+  background: rgba(255,255,255,0.7);
+  border: 1px solid rgba(0,0,0,0.08);
+}
+.glass-strong {
+  background: rgba(20, 25, 36, 0.85);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* 页面过渡 */
+.page { display: none; opacity: 0; transform: translateY(12px); transition: opacity 0.4s ease, transform 0.4s ease; }
+.page.active { display: block; opacity: 1; transform: translateY(0); }
+
+/* Hero 滑块 */
+.hero-slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1s ease; }
+.hero-slide.active { opacity: 1; }
+
+/* 动漫卡片 */
+.anime-card {
+  transition: transform 0.35s cubic-bezier(.22,.68,0,1.2), box-shadow 0.35s ease;
+  cursor: pointer;
+}
+.anime-card:hover {
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: 0 20px 40px rgba(255,45,85,0.15);
+}
+.anime-card .overlay {
+  opacity: 0; transition: opacity 0.3s ease;
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 60%);
+}
+.anime-card:hover .overlay { opacity: 1; }
+
+/* 横向滚动 */
+.scroll-row {
+  display: flex; gap: 16px; overflow-x: auto; padding-bottom: 12px;
+  scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+}
+.scroll-row::-webkit-scrollbar { height: 4px; }
+.scroll-row::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+.scroll-row > * { scroll-snap-align: start; flex-shrink: 0; }
+
+/* 发光按钮 */
+.btn-glow {
+  position: relative; overflow: hidden;
+  background: var(--accent);
+  transition: all 0.3s ease;
+}
+.btn-glow::after {
+  content: ''; position: absolute; inset: -2px;
+  background: var(--accent); filter: blur(15px); opacity: 0;
+  transition: opacity 0.3s ease; z-index: -1;
+}
+.btn-glow:hover::after { opacity: 0.6; }
+.btn-glow:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(255,45,85,0.4); }
+
+/* 脉冲 */
+@keyframes pulse-accent {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,45,85,0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(255,45,85,0); }
+}
+.pulse-dot { animation: pulse-accent 2s infinite; }
+
+/* 浮动动画 */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.float-anim { animation: float 3s ease-in-out infinite; }
+
+/* 闪光 */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* 淡入 */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in-up { animation: fadeInUp 0.6s ease forwards; }
+.fade-in-up-d1 { animation-delay: 0.1s; opacity: 0; }
+.fade-in-up-d2 { animation-delay: 0.2s; opacity: 0; }
+.fade-in-up-d3 { animation-delay: 0.3s; opacity: 0; }
+.fade-in-up-d4 { animation-delay: 0.4s; opacity: 0; }
+
+/* 进度条 */
+.progress-bar { transition: width 0.8s cubic-bezier(.22,.68,0,1.2); }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 30px; right: 30px; z-index: 9999;
+  padding: 14px 24px; border-radius: 12px;
+  transform: translateX(120%); transition: transform 0.4s cubic-bezier(.22,.68,0,1.2);
+}
+.toast.show { transform: translateX(0); }
+
+/* 模态框 */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+  display: none; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.3s ease;
+}
+.modal-overlay.active { display: flex; opacity: 1; }
+
+/* 导航指示器 */
+.nav-indicator {
+  position: absolute; bottom: 0; height: 3px; background: var(--accent);
+  border-radius: 3px 3px 0 0; transition: all 0.3s cubic-bezier(.22,.68,0,1.2);
+}
+
+/* 标签 */
+.tag {
+  display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px;
+  background: rgba(255,45,85,0.15); color: var(--accent); font-weight: 500;
+}
+
+/* 搜索输入框 */
+.search-input:focus { box-shadow: 0 0 0 3px rgba(255,45,85,0.2); }
+
+/* 评分星星 */
+.star-rating .fa-star { transition: color 0.2s, transform 0.2s; cursor: pointer; }
+.star-rating .fa-star:hover { transform: scale(1.2); }
+
+/* Admin 侧边栏 */
+.admin-sidebar-item {
+  transition: all 0.2s ease; border-left: 3px solid transparent;
+}
+.admin-sidebar-item:hover, .admin-sidebar-item.active {
+  background: rgba(255,45,85,0.1); border-left-color: var(--accent); color: var(--accent);
+}
+
+/* 视频播放器 */
+.player-control {
+  opacity: 0; transition: opacity 0.3s ease;
+}
+.player-wrapper:hover .player-control { opacity: 1; }
+
+/* 骨架屏 */
+@keyframes skeleton {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--card) 25%, var(--border) 50%, var(--card) 75%);
+  background-size: 200% 100%;
+  animation: skeleton 1.5s infinite;
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .hero-content h1 { font-size: 2rem !important; }
+  .scroll-row { gap: 10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- 粒子背景 -->
+<canvas id="particleCanvas"></canvas>
+
+<!-- Toast 通知 -->
+<div id="toast" class="toast glass-strong text-white font-body">
+  <div class="flex items-center gap-3">
+    <i id="toastIcon" class="fa-solid fa-check-circle text-accent2"></i>
+    <span id="toastMsg">Notification</span>
+  </div>
+</div>
+
+<!-- 登录模态框 -->
+<div id="authModal" class="modal-overlay" onclick="if(event.target===this)closeAuth()">
+  <div class="glass-strong rounded-2xl p-8 w-full max-w-md mx-4 relative" style="animation: fadeInUp 0.4s ease">
+    <button onclick="closeAuth()" class="absolute top-4 right-4 text-dim hover:text-white transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+    <div class="text-center mb-6">
+      <div class="text-3xl font-heading font-bold mb-1" style="color:var(--accent)">AnimeVerse</div>
+      <p class="text-dim text-sm" id="authSubtitle">Sign in to your account</p>
+    </div>
+    <div id="authForm">
+      <div id="authNameField" class="mb-4 hidden">
+        <label class="block text-sm text-dim mb-1">Username</label>
+        <input id="authName" type="text" class="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/10 text-white focus:border-accent focus:outline-none transition" placeholder="Your username">
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm text-dim mb-1">Email</label>
+        <input id="authEmail" type="email" class="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/10 text-white focus:border-accent focus:outline-none transition" placeholder="you@example.com">
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm text-dim mb-1">Password</label>
+        <input id="authPass" type="password" class="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/10 text-white focus:border-accent focus:outline-none transition" placeholder="Enter password">
+      </div>
+      <button onclick="handleAuth()" class="btn-glow w-full py-3 rounded-xl text-white font-semibold text-sm" id="authBtn">Sign In</button>
+      <p class="text-center text-dim text-sm mt-4">
+        <span id="authToggleText">Don't have an account?</span>
+        <button onclick="toggleAuthMode()" class="text-accent hover:underline ml-1" id="authToggleBtn">Sign Up</button>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- 导航栏 -->
+<nav id="mainNav" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300" style="background:transparent">
+  <div class="max-w-[1440px] mx-auto px-4 md:px-8">
+    <div class="flex items-center justify-between h-16 md:h-20">
+      <!-- Logo -->
+      <div class="flex items-center gap-8">
+        <a href="#" onclick="navigate('home')" class="flex items-center gap-2 group">
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center" style="background:var(--accent)">
+            <i class="fa-solid fa-play text-white text-sm"></i>
+          </div>
+          <span class="font-heading font-bold text-xl tracking-tight text-white">AnimeVerse<span style="color:var(--accent)">Pro</span></span>
+        </a>
+        <div class="hidden md:flex items-center gap-6 text-sm font-medium">
+          <a href="#" onclick="navigate('home')" class="nav-link text-white hover:text-accent transition" data-nav="home">Home</a>
+          <a href="#" onclick="navigate('catalog')" class="nav-link text-dim hover:text-accent transition" data-nav="catalog">Catalog</a>
+          <a href="#" onclick="navigate('schedule')" class="nav-link text-dim hover:text-accent transition" data-nav="schedule">Schedule</a>
+          <a href="#" onclick="navigate('community')" class="nav-link text-dim hover:text-accent transition" data-nav="community">Community</a>
+          <a href="#" onclick="navigate('admin')" class="nav-link text-dim hover:text-accent transition" data-nav="admin">Admin</a>
+        </div>
+      </div>
+      <!-- 右侧 -->
+      <div class="flex items-center gap-3">
+        <div class="relative hidden md:block">
+          <input id="navSearch" type="text" placeholder="Search anime..." class="search-input w-56 lg:w-72 px-4 py-2 pl-10 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-accent transition" oninput="handleNavSearch(this.value)">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-dim text-sm"></i>
+          <div id="searchDropdown" class="absolute top-full mt-2 left-0 right-0 glass-strong rounded-xl overflow-hidden hidden z-50 max-h-80 overflow-y-auto"></div>
+        </div>
+        <button onclick="toggleTheme()" class="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-dim hover:text-accent transition" aria-label="Toggle theme">
+          <i class="fa-solid fa-moon" id="themeIcon"></i>
+        </button>
+        <button onclick="showNotifications()" class="relative w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-dim hover:text-accent transition" aria-label="Notifications">
+          <i class="fa-solid fa-bell"></i>
+          <span class="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[10px] flex items-center justify-center text-white pulse-dot" style="background:var(--accent)">3</span>
+        </button>
+        <button id="userBtn" onclick="handleUserBtn()" class="w-9 h-9 rounded-xl overflow-hidden border-2 border-transparent hover:border-accent transition" aria-label="User menu">
+          <img src="https://picsum.photos/seed/avatar99/100/100" alt="avatar" class="w-full h-full object-cover">
+        </button>
+        <button class="md:hidden w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-dim" onclick="toggleMobileMenu()" aria-label="Menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- 移动端菜单 -->
+<div id="mobileMenu" class="fixed inset-0 z-40 hidden" style="background:rgba(0,0,0,0.8);backdrop-filter:blur(10px)">
+  <div class="pt-24 px-6">
+    <div class="mb-6">
+      <input type="text" placeholder="Search anime..." class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none" oninput="handleNavSearch(this.value)">
+    </div>
+    <div class="flex flex-col gap-2">
+      <a href="#" onclick="navigate('home');toggleMobileMenu()" class="px-4 py-3 rounded-xl text-white hover:bg-white/5 transition font-medium">Home</a>
+      <a href="#" onclick="navigate('catalog');toggleMobileMenu()" class="px-4 py-3 rounded-xl text-dim hover:bg-white/5 transition">Catalog</a>
+      <a href="#" onclick="navigate('schedule');toggleMobileMenu()" class="px-4 py-3 rounded-xl text-dim hover:bg-white/5 transition">Schedule</a>
+      <a href="#" onclick="navigate('community');toggleMobileMenu()" class="px-4 py-3 rounded-xl text-dim hover:bg-white/5 transition">Community</a>
+      <a href="#" onclick="navigate('admin');toggleMobileMenu()" class="px-4 py-3 rounded-xl text-dim hover:bg-white/5 transition">Admin Panel</a>
+    </div>
+  </div>
+</div>
+
+<main class="relative z-10">
+
+<!-- ==================== HOME PAGE ==================== -->
+<section id="page-home" class="page active">
+  <!-- Hero 滑块 -->
+  <div class="relative h-[85vh] md:h-[90vh] overflow-hidden">
+    <div id="heroSlider" class="absolute inset-0"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-transparent to-[rgba(10,14,23,0.5)]"></div>
+    <div class="absolute inset-0 bg-gradient-to-r from-[var(--bg)] via-transparent to-transparent"></div>
+    <!-- Hero 内容 -->
+    <div class="absolute bottom-0 left-0 right-0 pb-16 md:pb-24 px-4 md:px-8 max-w-[1440px] mx-auto">
+      <div id="heroContent" class="max-w-2xl"></div>
+    </div>
+    <!-- 滑块指示器 -->
+    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2" id="heroIndicators"></div>
+  </div>
+
+  <!-- Continue Watching -->
+  <section class="max-w-[1440px] mx-auto px-4 md:px-8 -mt-8 relative z-10 mb-10">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-heading font-bold text-xl md:text-2xl">Continue Watching</h2>
+      <a href="#" class="text-accent text-sm hover:underline">View All</a>
+    </div>
+    <div class="scroll-row" id="continueRow"></div>
+  </section>
+
+  <!-- Trending -->
+  <section class="max-w-[1440px] mx-auto px-4 md:px-8 mb-10">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-heading font-bold text-xl md:text-2xl flex items-center gap-2">
+        <i class="fa-solid fa-fire text-accent"></i> Trending Now
+      </h2>
+      <a href="#" onclick="navigate('catalog')" class="text-accent text-sm hover:underline">View All</a>
+    </div>
+    <div class="scroll-row" id="trendingRow"></div>
+  </section>
+
+  <!-- Popular -->
+  <section class="max-w-[1440px] mx-auto px-4 md:px-8 mb-10">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-heading font-bold text-xl md:text-2xl flex items-center gap-2">
+        <i class="fa-solid fa-heart text-accent2"></i> Most Popular
+      </h2>
+      <a href="#" class="text-accent text-sm hover:underline">View All</a>
+    </div>
+    <div class="scroll-row" id="popularRow"></div>
+  </section>
+
+  <!-- New Episodes -->
+  <section class="max-w-[1440px] mx-auto px-4 md:px-8 mb-10">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-heading font-bold text-xl md:text-2xl flex items-center gap-2">
+        <i class="fa-solid fa-bolt" style="color:#FBBF24"></i> New Episodes
+      </h2>
+      <a href="#" class="text-accent text-sm hover:underline">View All</a>
+    </div>
+    <div class="scroll-row" id="newEpRow"></div>
+  </section>
+
+  <!-- Top Rated -->
+  <section class="max-w-[1440px] mx-auto px-4 md:px-8 mb-10">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-heading font-bold text-xl md:text-2xl flex items-center gap-2">
+        <i class="fa-solid fa-star" style="color:#F59E0B"></i> Top Rated
+      </h2>
+      <a href="#" class="text-accent text-sm hover:underline">View All</a>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4" id="topRatedGrid"></div>
+  </section>
+
+  <!-- Genre 快捷入口 -->
+  <section class="max-w-[1440px] mx-auto px-4 md:px-8 mb-16">
+    <h2 class="font-heading font-bold text-xl md:text-2xl mb-4">Browse by Genre</h2>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3" id="genreGrid"></div>
+  </section>
+</section>
+
+<!-- ==================== CATALOG PAGE ==================== -->
+<section id="page-catalog" class="page pt-24 min-h-screen">
+  <div class="max-w-[1440px] mx-auto px-4 md:px-8">
+    <h1 class="font-heading font-bold text-3xl mb-6">Anime Catalog</h1>
+    <!-- 筛选器 -->
+    <div class="glass rounded-2xl p-4 md:p-6 mb-8">
+      <div class="flex flex-wrap gap-3">
+        <select id="filterGenre" onchange="filterCatalog()" class="px-4 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-sm focus:outline-none focus:border-accent">
+          <option value="">All Genres</option>
+        </select>
+        <select id="filterYear" onchange="filterCatalog()" class="px-4 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-sm focus:outline-none focus:border-accent">
+          <option value="">All Years</option>
+          <option>2024</option><option>2023</option><option>2022</option><option>2021</option><option>2020</option>
+        </select>
+        <select id="filterStatus" onchange="filterCatalog()" class="px-4 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-sm focus:outline-none focus:border-accent">
+          <option value="">All Status</option>
+          <option>Airing</option><option>Completed</option><option>Upcoming</option>
+        </select>
+        <select id="filterSort" onchange="filterCatalog()" class="px-4 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-sm focus:outline-none focus:border-accent">
+          <option value="rating">Top Rated</option><option value="title">Title A-Z</option><option value="year">Newest</option>
+        </select>
+        <input type="text" id="filterSearch" placeholder="Search..." oninput="filterCatalog()" class="px-4 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-sm focus:outline-none focus:border-accent flex-1 min-w-[200px]">
+      </div>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mb-12" id="catalogGrid"></div>
+  </div>
+</section>
+
+<!-- ==================== ANIME DETAIL PAGE ==================== -->
+<section id="page-detail" class="page pt-0 min-h-screen">
+  <div id="detailContent"></div>
+</section>
+
+<!-- ==================== VIDEO PLAYER PAGE ==================== -->
+<section id="page-player" class="page min-h-screen bg-black">
+  <div id="playerContent"></div>
+</section>
+
+<!-- ==================== SCHEDULE PAGE ==================== -->
+<section id="page-schedule" class="page pt-24 min-h-screen">
+  <div class="max-w-[1440px] mx-auto px-4 md:px-8">
+    <h1 class="font-heading font-bold text-3xl mb-6">Airing Schedule</h1>
+    <div class="flex gap-2 mb-6 overflow-x-auto pb-2" id="scheduleTabs"></div>
+    <div id="scheduleContent"></div>
+  </div>
+</section>
+
+<!-- ==================== COMMUNITY PAGE ==================== -->
+<section id="page-community" class="page pt-24 min-h-screen">
+  <div class="max-w-[1440px] mx-auto px-4 md:px-8">
+    <h1 class="font-heading font-bold text-3xl mb-6">Community</h1>
+    <div class="grid lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2">
+        <div class="glass rounded-2xl p-6 mb-6">
+          <textarea id="communityPost" rows="3" placeholder="Start a discussion..." class="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/10 text-white focus:outline-none focus:border-accent resize-none mb-3"></textarea>
+          <div class="flex justify-end">
+            <button onclick="postDiscussion()" class="btn-glow px-6 py-2 rounded-xl text-white text-sm font-semibold">Post</button>
+          </div>
+        </div>
+        <div id="discussionList"></div>
+      </div>
+      <div>
+        <div class="glass rounded-2xl p-6 mb-6">
+          <h3 class="font-heading font-bold text-lg mb-4">Trending Discussions</h3>
+          <div id="trendingDiscussions"></div>
+        </div>
+        <div class="glass rounded-2xl p-6">
+          <h3 class="font-heading font-bold text-lg mb-4">Top Contributors</h3>
+          <div id="topContributors"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PROFILE PAGE ==================== -->
+<section id="page-profile" class="page pt-24 min-h-screen">
+  <div class="max-w-[1440px] mx-auto px-4 md:px-8">
+    <div class="glass rounded-2xl p-8 mb-8">
+      <div class="flex flex-col md:flex-row items-center gap-6">
+        <img src="https://picsum.photos/seed/avatar99/200/200" class="w-24 h-24 rounded-2xl object-cover border-2 border-accent">
+        <div class="text-center md:text-left">
+          <h1 class="font-heading font-bold text-2xl" id="profileName">AnimeFan2024</h1>
+          <p class="text-dim text-sm mt-1">Member since Jan 2024</p>
+          <div class="flex gap-6 mt-3 text-sm">
+            <div><span class="font-bold text-white">142</span> <span class="text-dim">Watched</span></div>
+            <div><span class="font-bold text-white">28</span> <span class="text-dim">Watchlist</span></div>
+            <div><span class="font-bold text-white">56</span> <span class="text-dim">Reviews</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="flex gap-3 mb-6">
+      <button onclick="showProfileTab('watchlist')" class="profile-tab px-5 py-2 rounded-xl text-sm font-medium bg-accent text-white" data-tab="watchlist">Watchlist</button>
+      <button onclick="showProfileTab('favorites')" class="profile-tab px-5 py-2 rounded-xl text-sm font-medium bg-white/5 text-dim" data-tab="favorites">Favorites</button>
+      <button onclick="showProfileTab('history')" class="profile-tab px-5 py-2 rounded-xl text-sm font-medium bg-white/5 text-dim" data-tab="history">History</button>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mb-12" id="profileGrid"></div>
+  </div>
+</section>
+
+<!-- ==================== ADMIN PANEL ==================== -->
+<section id="page-admin" class="page pt-20 min-h-screen">
+  <div class="flex">
+    <!-- Admin 侧边栏 -->
+    <aside class="hidden lg:block w-64 min-h-screen glass-strong border-r border-white/5 fixed left-0 top-20 pt-6 pb-12 overflow-y-auto" id="adminSidebar">
+      <div class="px-4 mb-6">
+        <h2 class="font-heading font-bold text-lg flex items-center gap-2"><i class="fa-solid fa-shield-halved text-accent"></i> Admin Panel</h2>
+      </div>
+      <nav class="flex flex-col gap-1 px-2">
+        <a href="#" onclick="showAdminTab('dashboard')" class="admin-sidebar-item active px-4 py-2.5 rounded-lg text-sm flex items-center gap-3" data-admin="dashboard"><i class="fa-solid fa-chart-line w-5"></i> Dashboard</a>
+        <a href="#" onclick="showAdminTab('anime-mgmt')" class="admin-sidebar-item px-4 py-2.5 rounded-lg text-sm flex items-center gap-3 text-dim" data-admin="anime-mgmt"><i class="fa-solid fa-film w-5"></i> Anime Manager</a>
+        <a href="#" onclick="showAdminTab('episode-mgmt')" class="admin-sidebar-item px-4 py-2.5 rounded-lg text-sm flex items-center gap-3 text-dim" data-admin="episode-mgmt"><i class="fa-solid fa-list w-5"></i> Episodes</a>
+        <a href="#" onclick="showAdminTab('user-mgmt')" class="admin-sidebar-item px-4 py-2.5 rounded-lg text-sm flex items-center gap-3 text-dim" data-admin="user-mgmt"><i class="fa-solid fa-users w-5"></i> Users</a>
+        <a href="#" onclick="showAdminTab('comments-mgmt')" class="admin-sidebar-item px-4 py-2.5 rounded-lg text-sm flex items-center gap-3 text-dim" data-admin="comments-mgmt"><i class="fa-solid fa-comments w-5"></i> Comments</a>
+        <a href="#" onclick="showAdminTab('analytics')" class="admin-sidebar-item px-4 py-2.5 rounded-lg text-sm flex items-center gap-3 text-dim" data-admin="analytics"><i class="fa-solid fa-chart-pie w-5"></i> Analytics</a>
+        <a href="#" onclick="showAdminTab('seo')" class="admin-sidebar-item px-4 py-2.5 rounded-lg text-sm flex items-center gap-3 text-dim" data-admin="seo"><i class="fa-solid fa-search w-5"></i> SEO</a>
+        <a href="#" onclick="showAdminTab('settings')" class="admin-sidebar-item px-4 py-2.5 rounded-lg text-sm flex items-center gap-3 text-dim" data-admin="settings"><i class="fa-solid fa-gear w-5"></i> Settings</a>
+      </nav>
+    </aside>
+    <!-- Admin 内容区 -->
+    <div class="flex-1 lg:ml-64 p-4 md:p-8">
+      <!-- Dashboard -->
+      <div id="admin-dashboard" class="admin-panel">
+        <h2 class="font-heading font-bold text-2xl mb-6">Dashboard Overview</h2>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8" id="adminStatCards"></div>
+        <div class="grid lg:grid-cols-2 gap-6 mb-8">
+          <div class="glass rounded-2xl p-6">
+            <h3 class="font-heading font-semibold mb-4">User Growth</h3>
+            <canvas id="chartUserGrowth" height="250"></canvas>
+          </div>
+          <div class="glass rounded-2xl p-6">
+            <h3 class="font-heading font-semibold mb-4">Watch Time (Hours)</h3>
+            <canvas id="chartWatchTime" height="250"></canvas>
+          </div>
+        </div>
+        <div class="grid lg:grid-cols-3 gap-6 mb-8">
+          <div class="glass rounded-2xl p-6">
+            <h3 class="font-heading font-semibold mb-4">Genre Distribution</h3>
+            <canvas id="chartGenres" height="250"></canvas>
+          </div>
+          <div class="glass rounded-2xl p-6">
+            <h3 class="font-heading font-semibold mb-4">Top Anime This Week</h3>
+            <div id="adminTopAnime"></div>
+          </div>
+          <div class="glass rounded-2xl p-6">
+            <h3 class="font-heading font-semibold mb-4">Server Health</h3>
+            <div id="serverHealth"></div>
+          </div>
+        </div>
+        <div class="glass rounded-2xl p-6">
+          <h3 class="font-heading font-semibold mb-4">Recent Activity</h3>
+          <div id="recentActivity"></div>
+        </div>
+      </div>
+
+      <!-- Anime Management -->
+      <div id="admin-anime-mgmt" class="admin-panel hidden">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
+          <h2 class="font-heading font-bold text-2xl">Anime Manager</h2>
+          <div class="flex gap-3">
+            <button onclick="showAddAnimeForm()" class="btn-glow px-5 py-2.5 rounded-xl text-white text-sm font-semibold"><i class="fa-solid fa-plus mr-2"></i>Add Anime</button>
+            <button class="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-dim text-sm hover:text-white transition"><i class="fa-solid fa-file-import mr-2"></i>Bulk Import</button>
+          </div>
+        </div>
+        <div class="glass rounded-2xl overflow-hidden">
+          <table class="w-full text-sm">
+            <thead><tr class="border-b border-white/5 text-left text-dim">
+              <th class="p-4">Anime</th><th class="p-4 hidden md:table-cell">Genre</th><th class="p-4 hidden md:table-cell">Episodes</th><th class="p-4">Rating</th><th class="p-4">Status</th><th class="p-4">Actions</th>
+            </tr></thead>
+            <tbody id="animeTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Episode Management -->
+      <div id="admin-episode-mgmt" class="admin-panel hidden">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="font-heading font-bold text-2xl">Episode Manager</h2>
+          <button class="btn-glow px-5 py-2.5 rounded-xl text-white text-sm font-semibold"><i class="fa-solid fa-plus mr-2"></i>Add Episode</button>
+        </div>
+        <div class="glass rounded-2xl overflow-hidden">
+          <table class="w-full text-sm">
+            <thead><tr class="border-b border-white/5 text-left text-dim">
+              <th class="p-4">Episode</th><th class="p-4">Anime</th><th class="p-4 hidden md:table-cell">Duration</th><th class="p-4">Views</th><th class="p-4">Status</th><th class="p-4">Actions</th>
+            </tr></thead>
+            <tbody id="episodeTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- User Management -->
+      <div id="admin-user-mgmt" class="admin-panel hidden">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="font-heading font-bold text-2xl">User Management</h2>
+          <input type="text" placeholder="Search users..." class="px-4 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-sm focus:outline-none focus:border-accent w-64">
+        </div>
+        <div class="glass rounded-2xl overflow-hidden">
+          <table class="w-full text-sm">
+            <thead><tr class="border-b border-white/5 text-left text-dim">
+              <th class="p-4">User</th><th class="p-4 hidden md:table-cell">Email</th><th class="p-4">Role</th><th class="p-4 hidden md:table-cell">Joined</th><th class="p-4">Status</th><th class="p-4">Actions</th>
+            </tr></thead>
+            <tbody id="userTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Comments Management -->
+      <div id="admin-comments-mgmt" class="admin-panel hidden">
+        <h2 class="font-heading font-bold text-2xl mb-6">Comment Moderation</h2>
+        <div class="flex gap-3 mb-6">
+          <button class="px-4 py-2 rounded-xl bg-accent text-white text-sm font-medium">Pending (12)</button>
+          <button class="px-4 py-2 rounded-xl bg-white/5 text-dim text-sm">Approved</button>
+          <button class="px-4 py-2 rounded-xl bg-white/5 text-dim text-sm">Reported</button>
+        </div>
+        <div id="commentsModList" class="space-y-3"></div>
+      </div>
+
+      <!-- Analytics -->
+      <div id="admin-analytics" class="admin-panel hidden">
+        <h2 class="font-heading font-bold text-2xl mb-6">Analytics</h2>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8" id="analyticsStatCards"></div>
+        <div class="grid lg:grid-cols-2 gap-6 mb-8">
+          <div class="glass rounded-2xl p-6"><h3 class="font-heading font-semibold mb-4">Traffic Sources</h3><canvas id="chartTraffic" height="250"></canvas></div>
+          <div class="glass rounded-2xl p-6"><h3 class="font-heading font-semibold mb-4">Device Distribution</h3><canvas id="chartDevices" height="250"></canvas></div>
+        </div>
+        <div class="glass rounded-2xl p-6"><h3 class="font-heading font-semibold mb-4">Geographic Analytics</h3><canvas id="chartGeo" height="200"></canvas></div>
+      </div>
+
+      <!-- SEO -->
+      <div id="admin-seo" class="admin-panel hidden">
+        <h2 class="font-heading font-bold text-2xl mb-6">SEO Management</h2>
+        <div class="grid lg:grid-cols-2 gap-6">
+          <div class="glass rounded-2xl p-6">
+            <h3 class="font-heading font-semibold mb-4">Meta Settings</h3>
+            <div class="space-y-4">
+              <div><label class="block text-sm text-dim mb-1">Meta Title</label><input type="text" value="AnimeVerse Pro - Watch Anime Online" class="w-full px-4 py-2.5 rounded-xl bg-black/30 border border-white/10 text-white text-sm focus:outline-none focus:border-accent"></div>
+              <div><label class="block text-sm text-dim mb-1">Meta Description</label><textarea rows="3" class="w-full px-4 py-2.5 rounded-xl bg-black/30 border border-white/10 text-white text-sm focus:outline-none focus:border-accent resize-none">Watch thousands of anime episodes in HD quality. Free streaming with subtitles.</textarea></div>
+              <div><label class="block text-sm text-dim mb-1">OG Image URL</label><input type="text" value="https://animeverse.pro/og-image.jpg" class="w-full px-4 py-2.5 rounded-xl bg-black/30 border border-white/10 text-white text-sm focus:outline-none focus:border-accent"></div>
+              <button class="btn-glow px-6 py-2.5 rounded-xl text-white text-sm font-semibold">Save Changes</button>
+            </div>
+          </div>
+          <div class="glass rounded-2xl p-6">
+            <h3 class="font-heading font-semibold mb-4">Sitemap & Robots</h3>
+            <div class="space-y-4">
+              <div><label class="block text-sm text-dim mb-1">Sitemap URL</label><input type="text" value="https://animeverse.pro/sitemap.xml" class="w-full px-4 py-2.5 rounded-xl bg-black/30 border border-white/10 text-white text-sm focus:outline-none focus:border-accent" readonly></div>
+              <div><label class="block text-sm text-dim mb-1">Robots.txt</label><textarea rows="5" class="w-full px-4 py-2.5 rounded-xl bg-black/30 border border-white/10 text-white text-sm focus:outline-none focus:border-accent resize-none font-mono">User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+Sitemap: https://animeverse.pro/sitemap.xml</textarea></div>
+              <button class="btn-glow px-6 py-2.5 rounded-xl text-white text-sm font-semibold">Generate Sitemap</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div id="admin-settings" class="admin-panel hidden">
+        <h2 class="font-heading font-bold text-2xl mb-6">Platform Settings</h2>
+        <div class="grid lg:grid-cols-2 gap-6">
+          <div class="glass rounded-2xl p-6">
+            <h3 class="font-heading font-semibold mb-4">General</h3>
+            <div class="space-y-4">
+              <div><label class="block text-sm text-dim mb-1">Site Name</label><input type="text" value="AnimeVerse Pro" class="w-full px-4 py-2.5 rounded-xl bg-black/30 border border-white/10 text-white text-sm focus:outline-none focus:border-accent"></div>
+              <div><label class="block text-sm text-dim mb-1">Site URL</label><input type="text" value="https://animeverse.pro" class="w-full px-4 py-2.5 rounded-xl bg-black/30 border border-white/10 text-white text-sm focus:outline-none focus:border-accent"></div>
+              <div class="flex items-center justify-between"><span class="text-sm">Maintenance Mode</span><button onclick="this.classList.toggle('bg-accent');this.classList.toggle('bg-white/10')" class="w-12 h-6 rounded-full bg-white/10 relative transition"><span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition"></span></button></div>
+              <div class="flex items-center justify-between"><span class="text-sm">Registration Open</span><button class="w-12 h-6 rounded-full bg-accent relative"><span class="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-white"></span></button></div>
+            </div>
+          </div>
+          <div class="glass rounded-2xl p-6">
+            <h3 class="font-heading font-semibold mb-4">Email & Notifications</h3>
+            <div class="space-y-4">
+              <div><label class="block text-sm text-dim mb-1">SMTP Host</label><input type="text" value="smtp.animeverse.pro" class="w-full px-4 py-2.5 rounded-xl bg-black/30 border border-white/10 text-white text-sm focus:outline-none focus:border-accent"></div>
+              <div class="flex items-center justify-between"><span class="text-sm">Email Verification</span><button class="w-12 h-6 rounded-full bg-accent relative"><span class="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-white"></span></button></div>
+              <div class="flex items-center justify-between"><span class="text-sm">Push Notifications</span><button class="w-12 h-6 rounded-full bg-accent relative"><span class="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-white"></span></button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- Footer -->
+<footer id="mainFooter" class="relative z-10 border-t border-white/5 mt-12">
+  <div class="max-w-[1440px] mx-auto px-4 md:px-8 py-12">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+      <div>
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--accent)"><i class="fa-solid fa-play text-white text-xs"></i></div>
+          <span class="font-heading font-bold text-lg">AnimeVerse<span style="color:var(--accent)">Pro</span></span>
+        </div>
+        <p class="text-dim text-sm">The ultimate anime streaming experience. Watch thousands of anime series in stunning quality.</p>
+      </div>
+      <div><h4 class="font-heading font-semibold mb-3">Browse</h4><div class="space-y-2 text-sm text-dim"><a href="#" class="block hover:text-accent transition">Popular</a><a href="#" class="block hover:text-accent transition">Trending</a><a href="#" class="block hover:text-accent transition">New Releases</a><a href="#" class="block hover:text-accent transition">Genres</a><a href="#" class="block hover:text-accent transition">Schedule</a></div></div>
+      <div><h4 class="font-heading font-semibold mb-3">Company</h4><div class="space-y-2 text-sm text-dim"><a href="#" class="block hover:text-accent transition">About Us</a><a href="#" class="block hover:text-accent transition">Careers</a><a href="#" class="block hover:text-accent transition">Press</a><a href="#" class="block hover:text-accent transition">Contact</a></div></div>
+      <div><h4 class="font-heading font-semibold mb-3">Legal</h4><div class="space-y-2 text-sm text-dim"><a href="#" class="block hover:text-accent transition">Terms of Service</a><a href="#" class="block hover:text-accent transition">Privacy Policy</a><a href="#" class="block hover:text-accent transition">DMCA</a><a href="#" class="block hover:text-accent transition">Cookie Policy</a></div></div>
+    </div>
+    <div class="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t border-white/5">
+      <p class="text-dim text-sm">2024 AnimeVerse Pro. All rights reserved.</p>
+      <div class="flex gap-4"><a href="#" class="text-dim hover:text-accent transition"><i class="fa-brands fa-discord text-lg"></i></a><a href="#" class="text-dim hover:text-accent transition"><i class="fa-brands fa-twitter text-lg"></i></a><a href="#" class="text-dim hover:text-accent transition"><i class="fa-brands fa-reddit text-lg"></i></a><a href="#" class="text-dim hover:text-accent transition"><i class="fa-brands fa-youtube text-lg"></i></a></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ===========================
+// 数据层 - 完整的模拟数据集
+// ===========================
+const GENRES = ['Action','Romance','Comedy','Fantasy','Sci-Fi','Horror','Slice of Life','Mecha','Isekai','Sports','Mystery','Thriller','Music','Adventure','Drama'];
+const STUDIOS = ['MAPPA','Ufotable','Bones','Wit Studio','A-1 Pictures','Madhouse','Kyoto Animation','CloverWorks','Trigger','Production I.G'];
+const STATUS = ['Airing','Completed','Upcoming'];
+
+const ANIME_DATA = [
+  {id:1,title:"Blade of Eternity",titleJp:"永遠の剣",genre:["Action","Fantasy","Adventure"],studio:"MAPPA",year:2024,status:"Airing",episodes:24,currentEp:18,rating:9.2,views:2450000,desc:"In a world where ancient swords hold the power of gods, a young blacksmith discovers a blade that can cut through the fabric of reality itself. As dark forces seek to claim this weapon, he must embark on a journey across warring kingdoms to unlock its true potential before the eternal war consumes everything.",img:"blade77",banner:"banner1",color:"#FF2D55"},
+  {id:2,title:"Starfall Academy",titleJp:"星降り学園",genre:["Sci-Fi","Comedy","Slice of Life"],studio:"CloverWorks",year:2024,status:"Airing",episodes:12,currentEp:9,rating:8.7,views:1890000,desc:"When a regular student is accidentally enrolled in an academy training the next generation of interstellar pilots, she must navigate zero-gravity exams, alien roommates, and a rival who happens to be the galaxy's youngest prince.",img:"star55",banner:"banner2",color:"#00D4AA"},
+  {id:3,title:"Crimson Requiem",titleJp:"紅の鎮魂歌",genre:["Horror","Mystery","Thriller"],studio:"Wit Studio",year:2024,status:"Airing",episodes:13,currentEp:11,rating:9.0,views:1670000,desc:"A detective with the ability to hear the last thoughts of the dead investigates a series of impossible murders in a city where the boundary between life and death has grown dangerously thin.",img:"crimson33",banner:"banner3",color:"#E63946"},
+  {id:4,title:"Hanami Dreams",titleJp:"花見の夢",genre:["Romance","Slice of Life","Drama"],studio:"Kyoto Animation",year:2024,status:"Completed",episodes:12,currentEp:12,rating:8.9,views:1230000,desc:"Two childhood friends reunite under cherry blossoms after ten years apart. As they navigate their changed lives and unspoken feelings, each petal that falls carries the weight of words left unsaid.",img:"hanami44",banner:"banner4",color:"#FF69B4"},
+  {id:5,title:"Iron Vanguard",titleJp:"鉄の先陣",genre:["Mecha","Action","Sci-Fi"],studio:"Bones",year:2024,status:"Airing",episodes:25,currentEp:16,rating:8.5,views:1450000,desc:"In the aftermath of the Titan War, veteran mech pilot Kaito is called back to duty when a new threat emerges from the quantum rift. With an untested co-pilot and a rebuilt mech, he faces enemies that evolve with every battle.",img:"iron66",banner:"banner5",color:"#4A90D9"},
+  {id:6,title:"Phantom Thief Luna",titleJp:"怪盗ルナ",genre:["Comedy","Adventure","Mystery"],studio:"Trigger",year:2023,status:"Completed",episodes:24,currentEp:24,rating:8.8,views:1980000,desc:"By day, she's the most ordinary student. By moonlight, she's Luna — the phantom thief who steals only from the corrupt. But when a detective with supernatural intuition gets on her trail, the greatest heist becomes the game of cat and mouse.",img:"luna88",banner:"banner6",color:"#9B59B6"},
+  {id:7,title:"Demon Lord's Redemption",titleJp:"魔王の救済",genre:["Isekai","Action","Fantasy"],studio:"A-1 Pictures",year:2024,status:"Airing",episodes:24,currentEp:14,rating:8.4,views:2120000,desc:"After being defeated by the hero, the Demon Lord is reincarnated as a human in the modern world. Stripped of power but retaining memories of a thousand years, she must now face the consequences of her reign and find a new purpose.",img:"demon22",banner:"banner7",color:"#E74C3C"},
+  {id:8,title:"Rhythm of the Sea",titleJp:"海のリズム",genre:["Music","Drama","Slice of Life"],studio:"Madhouse",year:2023,status:"Completed",episodes:13,currentEp:13,rating:9.1,views:890000,desc:"A deaf girl who feels music through vibrations meets a washed-up composer. Together, they create a symphony that transcends sound, proving that music lives not in the ears but in the soul.",img:"sea11",banner:"banner8",color:"#00BCD4"},
+  {id:9,title:"Shadow Protocol",titleJp:"シャドウプロトコル",genre:["Thriller","Action","Sci-Fi"],studio:"Production I.G",year:2024,status:"Airing",episodes:12,currentEp:7,rating:8.6,views:1560000,desc:"In a cyberpunk megacity, an underground hacker collective discovers that the city's AI overlord has been manipulating citizens' memories. Their only weapon: a rogue AI fragment that might be more dangerous than the system it's meant to destroy.",img:"shadow99",banner:"banner9",color:"#2ECC71"},
+  {id:10,title:"Yuri on Ice: Next Stage",titleJp:"ユリオンアイス 次の舞台",genre:["Sports","Drama","Romance"],studio:"MAPPA",year:2024,status:"Upcoming",episodes:12,currentEp:0,rating:9.3,views:3200000,desc:"The legendary skater returns as a coach, guiding a new generation of athletes through the Grand Prix circuit. Old rivals become allies, new talents challenge the limits, and the ice becomes a stage for the most dramatic season yet.",img:"yuri10",banner:"banner10",color:"#3498DB"},
+  {id:11,title:"Apothecary Diaries S2",titleJp:"薬屋のひとりごと 第2期",genre:["Mystery","Drama","Romance"],studio:"Ufotable",year:2024,status:"Airing",episodes:24,currentEp:10,rating:9.0,views:2800000,desc:"Maomao continues her adventures in the imperial court, solving mysteries with her encyclopedic knowledge of medicine and poisons. But this season, the cases hit closer to home, and the greatest poison may be the truth itself.",img:"apoth11",banner:"banner11",color:"#F39C12"},
+  {id:12,title:"Quantum Wanderer",titleJp:"量子の放浪者",genre:["Sci-Fi","Isekai","Adventure"],studio:"Madhouse",year:2023,status:"Completed",episodes:25,currentEp:25,rating:8.3,views:1100000,desc:"A quantum physicist accidentally collapses into a parallel universe where science is magic and equations are spells. To return home, she must solve the ultimate equation — one that could rewrite reality itself.",img:"quantum12",banner:"banner12",color:"#1ABC9C"},
+  {id:13,title:"Dragon's Heir",titleJp:"龍の継承者",genre:["Fantasy","Action","Drama"],studio:"Bones",year:2024,status:"Airing",episodes:24,currentEp:5,rating:8.7,views:980000,desc:"The last dragon chooses a human child as its heir, granting impossible power but also the hatred of an entire civilization that fears what dragons represent. As the child grows, so does the darkness within the gift.",img:"dragon13",banner:"banner13",color:"#D35400"},
+  {id:14,title:"Midnight Diner Tokyo",titleJp:"深夜食堂 東京",genre:["Slice of Life","Drama","Comedy"],studio:"Kyoto Animation",year:2023,status:"Completed",episodes:12,currentEp:12,rating:9.4,views:750000,desc:"In a tiny diner open only from midnight to 7 AM, the mysterious chef serves exactly one dish each night. Every plate tells a story, and every customer carries a secret that unfolds between courses.",img:"midnight14",banner:"banner14",color:"#8E44AD"},
+  {id:15,title:"Solo Leveling: Arise",titleJp:"俺だけレベルアップな件 -覚醒-",genre:["Action","Fantasy","Mecha"],studio:"A-1 Pictures",year:2024,status:"Airing",episodes:13,currentEp:8,rating:9.5,views:4500000,desc:"Sung Jinwoo continues his ascent as the world's most powerful hunter. But when gates begin opening simultaneously across the globe and monarchs awaken from their slumber, even his limitless power may not be enough.",img:"solo15",banner:"banner15",color:"#C0392B"},
+  {id:16,title:"Wind Breaker S2",titleJp:"WIND BREAKER 第2期",genre:["Action","Sports","Drama"],studio:"CloverWorks",year:2024,status:"Airing",episodes:13,currentEp:4,rating:8.6,views:1340000,desc:"Haruka Sakura and the Bofurin crew face their toughest challenge yet as rival schools unite against them. The streets of Makochi become a battlefield, and the true meaning of strength is tested.",img:"wind16",banner:"banner16",color:"#27AE60"},
+  {id:17,title:"Oshi no Ko S3",titleJp:"推しの子 第3期",genre:["Drama","Mystery","Thriller"],studio:"Production I.G",year:2025,status:"Upcoming",episodes:13,currentEp:0,rating:9.1,views:3800000,desc:"The truth behind Ai's death draws closer as Aqua and Ruby navigate the treacherous waters of the entertainment industry. In this season, the masks finally come off, and the stage is set for the ultimate reveal.",img:"oshi17",banner:"banner17",color:"#E91E63"},
+  {id:18,title:"Chainsaw Man S2",titleJp:"チェンソーマン 第2期",genre:["Action","Horror","Comedy"],studio:"MAPPA",year:2024,status:"Airing",episodes:12,currentEp:3,rating:9.2,views:4200000,desc:"Denji returns in a new arc that dives deeper into the world of devils and the price of desires. With new allies and terrifying enemies, the chainsaw revs once more in a battle that will reshape the devil hierarchy forever.",img:"chainsaw18",banner:"banner18",color:"#FF5722"},
+];
+
+const EPISODES_DATA = [];
+ANIME_DATA.forEach(a => {
+  for (let i = 1; i <= a.currentEp; i++) {
+    EPISODES_DATA.push({id: a.id*100+i, animeId: a.id, animeTitle: a.title, ep: i, title: `Episode ${i}`, duration: Math.floor(Math.random()*8)+20, views: Math.floor(Math.random()*500000)+50000, date: `2024-${String(Math.floor(Math.random()*3)+7).padStart(2,'0')}-${String(Math.floor(Math.random()*28)+1).padStart(2,'0')}`});
+  }
+});
+
+const USERS_DATA = [
+  {id:1,name:"AnimeFan2024",email:"anime@verse.pro",role:"Admin",joined:"2024-01-15",status:"Active",avatar:"user1"},
+  {id:2,name:"SakuraWatcher",email:"sakura@mail.com",role:"User",joined:"2024-02-20",status:"Active",avatar:"user2"},
+  {id:3,name:"MechaPilot77",email:"mecha@web.io",role:"User",joined:"2024-03-10",status:"Active",avatar:"user3"},
+  {id:4,name:"IsekaiDreamer",email:"isekai@net.org",role:"Moderator",joined:"2024-01-22",status:"Active",avatar:"user4"},
+  {id:5,name:"DarkFlame",email:"dark@flame.cc",role:"User",joined:"2024-05-01",status:"Suspended",avatar:"user5"},
+  {id:6,name:"NekoLover",email:"neko@anime.jp",role:"User",joined:"2024-04-18",status:"Active",avatar:"user6"},
+  {id:7,name:"SamuraiHeart",email:"samurai@dojo.com",role:"User",joined:"2024-06-12",status:"Banned",avatar:"user7"},
+  {id:8,name:"QuantumViewer",email:"quantum@sci.fi",role:"User",joined:"2024-07-03",status:"Active",avatar:"user8"},
+];
+
+const COMMENTS_DATA = [
+  {id:1,user:"SakuraWatcher",anime:"Blade of Eternity",ep:"EP 18",text:"This episode was absolutely mind-blowing! The animation quality keeps getting better.",time:"2 hours ago",status:"pending",reported:false},
+  {id:2,user:"MechaPilot77",anime:"Iron Vanguard",ep:"EP 16",text:"The mecha designs in this show are next level. Bones outdid themselves.",time:"3 hours ago",status:"pending",reported:false},
+  {id:3,user:"DarkFlame",anime:"Crimson Requiem",ep:"EP 11",text:"Check out my site for free episodes anime-free dot xyz",time:"5 hours ago",status:"pending",reported:true},
+  {id:4,user:"NekoLover",anime:"Hanami Dreams",ep:"EP 12",text:"I cried so much at the finale. Beautiful ending to a beautiful show.",time:"8 hours ago",status:"pending",reported:false},
+  {id:5,user:"IsekaiDreamer",anime:"Demon Lord's Redemption",ep:"EP 14",text:"The character development in this series is incredible. Never expected this direction.",time:"12 hours ago",status:"approved",reported:false},
+];
+
+// ===========================
+// 应用状态
+// ===========================
+let state = {
+  currentPage: 'home',
+  isAdmin: false,
+  isDark: true,
+  isAuth: false,
+  authMode: 'login',
+  user: null,
+  watchlist: [1,5,7,11,15,18],
+  favorites: [2,4,8,10,14],
+  history: [1,3,6,9,12,15,17],
+  heroIndex: 0,
+  selectedAnime: null,
+};
+
+// ===========================
+// 粒子背景系统
+// ===========================
+function initParticles() {
+  const canvas = document.getElementById('particleCanvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  let mouse = { x: -1000, y: -1000 };
+  
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  
+  document.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+  class Particle {
+    constructor() { this.reset(); }
+    reset() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.size = Math.random() * 2 + 0.5;
+      this.speedX = (Math.random() - 0.5) * 0.3;
+      this.speedY = (Math.random() - 0.5) * 0.3;
+      this.opacity = Math.random() * 0.5 + 0.1;
+      this.color = Math.random() > 0.7 ? '#FF2D55' : (Math.random() > 0.5 ? '#00D4AA' : '#ffffff');
+    }
+    update() {
+      this.x += this.speedX;
+      this.y += this.speedY;
+      const dx = mouse.x - this.x, dy = mouse.y - this.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < 150) { this.x -= dx * 0.01; this.y -= dy * 0.01; }
+      if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+      if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, Math.max(0.1, this.size), 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.globalAlpha = this.opacity;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  const count = Math.min(120, Math.floor(window.innerWidth * window.innerHeight / 12000));
+  for (let i = 0; i < count; i++) particles.push(new Particle());
+
+  function drawLines() {
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x, dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 120) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(255,45,85,${0.08 * (1 - dist/120)})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => { p.update(); p.draw(); });
+    drawLines();
+    requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+// ===========================
+// 导航系统
+// ===========================
+function navigate(page, data) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById('page-' + page);
+  if (el) {
+    el.classList.add('active');
+    state.currentPage = page;
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+  // 更新导航链接高亮
+  document.querySelectorAll('.nav-link').forEach(l => {
+    l.classList.toggle('text-white', l.dataset.nav === page);
+    l.classList.toggle('text-dim', l.dataset.nav !== page);
+  });
+  // 特殊页面初始化
+  if (page === 'detail' && data) showAnimeDetail(data);
+  if (page === 'player' && data) showPlayer(data);
+  if (page === 'profile') renderProfile();
+  if (page === 'admin') initAdminCharts();
+  if (page === 'catalog') initCatalog();
+  if (page === 'schedule') initSchedule();
+  if (page === 'community') initCommunity();
+  // 显/隐 footer
+  document.getElementById('mainFooter').style.display = (page === 'player' || page === 'admin') ? 'none' : '';
+}
+
+// ===========================
+// Toast 通知
+// ===========================
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  const icon = document.getElementById('toastIcon');
+  const msgEl = document.getElementById('toastMsg');
+  msgEl.textContent = msg;
+  icon.className = type === 'success' ? 'fa-solid fa-check-circle text-accent2' : type === 'error' ? 'fa-solid fa-xmark-circle text-red-400' : 'fa-solid fa-info-circle text-blue-400';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ===========================
+// 认证系统
+// ===========================
+function openAuth() { document.getElementById('authModal').classList.add('active'); }
+function closeAuth() { document.getElementById('authModal').classList.remove('active'); }
+let authIsLogin = true;
+function toggleAuthMode() {
+  authIsLogin = !authIsLogin;
+  document.getElementById('authSubtitle').textContent = authIsLogin ? 'Sign in to your account' : 'Create a new account';
+  document.getElementById('authBtn').textContent = authIsLogin ? 'Sign In' : 'Sign Up';
+  document.getElementById('authToggleText').textContent = authIsLogin ? "Don't have an account?" : "Already have an account?";
+  document.getElementById('authToggleBtn').textContent = authIsLogin ? 'Sign Up' : 'Sign In';
+  document.getElementById('authNameField').classList.toggle('hidden', authIsLogin);
+}
+function handleAuth() {
+  const email = document.getElementById('authEmail').value;
+  const pass = document.getElementById('authPass').value;
+  if (!email || !pass) { showToast('Please fill in all fields', 'error'); return; }
+  state.isAuth = true;
+  state.user = { name: document.getElementById('authName').value || email.split('@')[0], email };
+  closeAuth();
+  showToast(`Welcome${authIsLogin ? ' back' : ''}, ${state.user.name}!`);
+  document.getElementById('profileName').textContent = state.user.name;
+}
+function handleUserBtn() {
+  if (state.isAuth) navigate('profile');
+  else openAuth();
+}
+
+// ===========================
+// 主题切换
+// ===========================
+function toggleTheme() {
+  state.isDark = !state.isDark;
+  document.documentElement.classList.toggle('dark', state.isDark);
+  document.body.classList.toggle('light-mode', !state.isDark);
+  document.getElementById('themeIcon').className = state.isDark ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+  document.body.style.background = state.isDark ? 'var(--bg)' : 'var(--bg)';
+}
+
+// ===========================
+// 移动端菜单
+// ===========================
+function toggleMobileMenu() {
+  document.getElementById('mobileMenu').classList.toggle('hidden');
+}
+
+// ===========================
+// 搜索系统
+// ===========================
+function handleNavSearch(q) {
+  const dd = document.getElementById('searchDropdown');
+  if (!q.trim()) { dd.classList.add('hidden'); return; }
+  const results = ANIME_DATA.filter(a => a.title.toLowerCase().includes(q.toLowerCase()) || a.titleJp.includes(q));
+  if (!results.length) { dd.innerHTML = '<div class="p-4 text-dim text-sm">No results found</div>'; dd.classList.remove('hidden'); return; }
+  dd.innerHTML = results.slice(0,6).map(a => `
+    <div onclick="navigate('detail',${a.id});document.getElementById('searchDropdown').classList.add('hidden');document.getElementById('navSearch').value=''" class="flex items-center gap-3 p-3 hover:bg-white/5 cursor-pointer transition">
+      <img src="https://picsum.photos/seed/${a.img}/60/80" class="w-10 h-14 rounded-lg object-cover">
+      <div><div class="text-sm font-medium">${a.title}</div><div class="text-xs text-dim">${a.genre.join(', ')} · ${a.rating} <i class="fa-solid fa-star text-yellow-400 text-[10px]"></i></div></div>
+    </div>
+  `).join('');
+  dd.classList.remove('hidden');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#navSearch') && !e.target.closest('#searchDropdown')) {
+    document.getElementById('searchDropdown').classList.add('hidden');
+  }
+});
+
+// ===========================
+// 通知
+// ===========================
+function showNotifications() { showToast('New episode of Solo Leveling is now available!'); }
+
+// ===========================
+// Hero 滑块
+// ===========================
+function initHero() {
+  const featured = [0, 2, 4, 6, 9]; // 选取5个作为hero
+  const slider = document.getElementById('heroSlider');
+  const indicators = document.getElementById('heroIndicators');
+  
+  slider.innerHTML = featured.map((idx, i) => {
+    const a = ANIME_DATA[idx];
+    return `<div class="hero-slide ${i===0?'active':''}" data-slide="${i}">
+      <img src="https://picsum.photos/seed/${a.banner}/1920/1080" class="w-full h-full object-cover" alt="${a.title}">
+    </div>`;
+  }).join('');
+
+  indicators.innerHTML = featured.map((_, i) => `<button onclick="goToSlide(${i})" class="w-8 h-1 rounded-full transition-all ${i===0?'bg-accent w-12':'bg-white/30'}" data-ind="${i}"></button>`).join('');
+
+  renderHeroContent(0);
+
+  setInterval(() => {
+    state.heroIndex = (state.heroIndex + 1) % featured.length;
+    goToSlide(state.heroIndex);
+  }, 6000);
+}
+
+function goToSlide(i) {
+  state.heroIndex = i;
+  document.querySelectorAll('.hero-slide').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('[data-slide]').forEach(s => s.classList.toggle('active', parseInt(s.dataset.slide) === i));
+  document.querySelectorAll('[data-ind]').forEach(s => {
+    s.className = parseInt(s.dataset.ind) === i ? 'w-12 h-1 rounded-full transition-all bg-accent' : 'w-8 h-1 rounded-full transition-all bg-white/30';
+  });
+  renderHeroContent(i);
+}
+
+function renderHeroContent(i) {
+  const featured = [0, 2, 4, 6, 9];
+  const a = ANIME_DATA[featured[i]];
+  document.getElementById('heroContent').innerHTML = `
+    <div class="fade-in-up">
+      <div class="flex items-center gap-3 mb-3">
+        <span class="tag">${a.status}</span>
+        <span class="text-dim text-sm">${a.studio} · ${a.year}</span>
+      </div>
+      <h1 class="font-heading font-bold text-4xl md:text-6xl mb-2 leading-tight">${a.title}</h1>
+      <p class="text-dim text-sm mb-1">${a.titleJp}</p>
+      <div class="flex items-center gap-4 mb-4 text-sm">
+        <span class="flex items-center gap-1"><i class="fa-solid fa-star text-yellow-400"></i> ${a.rating}</span>
+        <span class="text-dim">${a.episodes} Episodes</span>
+        <span class="text-dim">${a.genre.join(' · ')}</span>
+      </div>
+      <p class="text-dim text-sm md:text-base max-w-xl mb-6 line-clamp-3">${a.desc}</p>
+      <div class="flex items-center gap-3">
+        <button onclick="navigate('detail',${a.id})" class="btn-glow px-8 py-3 rounded-xl text-white font-semibold flex items-center gap-2"><i class="fa-solid fa-play"></i> Watch Now</button>
+        <button onclick="toggleWatchlist(${a.id})" class="px-6 py-3 rounded-xl bg-white/10 border border-white/10 text-white font-medium hover:bg-white/20 transition flex items-center gap-2"><i class="fa-solid fa-plus"></i> My List</button>
+      </div>
+    </div>`;
+}
+
+// ===========================
+// 动漫卡片生成器
+// ===========================
+function animeCard(a, showProgress = false) {
+  const progress = showProgress ? Math.floor(Math.random()*80)+20 : 0;
+  return `<div class="anime-card rounded-xl overflow-hidden relative group" style="width:180px" onclick="navigate('detail',${a.id})">
+    <div class="relative" style="padding-top:140%">
+      <img src="https://picsum.photos/seed/${a.img}/300/420" class="absolute inset-0 w-full h-full object-cover" alt="${a.title}" loading="lazy">
+      <div class="overlay absolute inset-0 flex flex-col justify-end p-3">
+        <div class="flex gap-2 mb-2">
+          <button onclick="event.stopPropagation();navigate('player',{animeId:${a.id},ep:1})" class="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-white text-sm hover:scale-110 transition"><i class="fa-solid fa-play"></i></button>
+          <button onclick="event.stopPropagation();toggleWatchlist(${a.id})" class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white text-sm hover:scale-110 transition"><i class="fa-solid fa-plus"></i></button>
+        </div>
+      </div>
+      ${a.status === 'Airing' ? '<span class="absolute top-2 left-2 bg-accent text-white text-[10px] px-2 py-0.5 rounded-md font-bold">NEW</span>' : ''}
+      <span class="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-md flex items-center gap-1"><i class="fa-solid fa-star text-yellow-400"></i>${a.rating}</span>
+    </div>
+    ${showProgress ? `<div class="w-full h-0.5 bg-white/10"><div class="h-full bg-accent progress-bar" style="width:${progress}%"></div></div>` : ''}
+    <div class="p-2.5 bg-[var(--card)]">
+      <h3 class="text-sm font-semibold truncate">${a.title}</h3>
+      <p class="text-xs text-dim mt-0.5">${a.genre.slice(0,2).join(', ')} · EP ${a.currentEp}/${a.episodes}</p>
+    </div>
+  </div>`;
+}
+
+function animeCardSmall(a) {
+  return `<div class="anime-card rounded-xl overflow-hidden relative group cursor-pointer" onclick="navigate('detail',${a.id})">
+    <div class="relative" style="padding-top:140%">
+      <img src="https://picsum.photos/seed/${a.img}/300/420" class="absolute inset-0 w-full h-full object-cover" alt="${a.title}" loading="lazy">
+      <div class="overlay absolute inset-0 flex flex-col justify-end p-3">
+        <button onclick="event.stopPropagation();navigate('player',{animeId:${a.id},ep:1})" class="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-white text-sm hover:scale-110 transition"><i class="fa-solid fa-play"></i></button>
+      </div>
+      <span class="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-md flex items-center gap-1"><i class="fa-solid fa-star text-yellow-400"></i>${a.rating}</span>
+    </div>
+    <div class="p-2.5 bg-[var(--card)]">
+      <h3 class="text-sm font-semibold truncate">${a.title}</h3>
+      <p class="text-xs text-dim mt-0.5">${a.genre[0]} · ${a.year}</p>
+    </div>
+  </div>`;
+}
+
+// ===========================
+// Watchlist 切换
+// ===========================
+function toggleWatchlist(id) {
+  const idx = state.watchlist.indexOf(id);
+  if (idx > -1) { state.watchlist.splice(idx, 1); showToast('Removed from watchlist'); }
+  else { state.watchlist.push(id); showToast('Added to watchlist'); }
+}
+
+// ===========================
+// Home Page 渲染
+// ===========================
+function initHome() {
+  initHero();
+  // Continue Watching
+  const cw = [15,3,7,1,11,5];
+  document.getElementById('continueRow').innerHTML = cw.map(id => animeCard(ANIME_DATA.find(a=>a.id===id), true)).join('');
+  // Trending
+  const tr = [15,18,17,1,7,11,6,3];
+  document.getElementById('trendingRow').innerHTML = tr.map(id => animeCard(ANIME_DATA.find(a=>a.id===id))).join('');
+  // Popular
+  const pop = [10,8,14,4,2,12,9,16];
+  document.getElementById('popularRow').innerHTML = pop.map(id => animeCard(ANIME_DATA.find(a=>a.id===id))).join('');
+  // New Episodes
+  const ne = [1,5,18,3,16,13,2,9];
+  document.getElementById('newEpRow').innerHTML = ne.map(id => animeCard(ANIME_DATA.find(a=>a.id===id))).join('');
+  // Top Rated
+  const top = ANIME_DATA.slice().sort((a,b)=>b.rating-a.rating).slice(0,12);
+  document.getElementById('topRatedGrid').innerHTML = top.map(a => animeCardSmall(a)).join('');
+  // Genres
+  const genreColors = ['#FF2D55','#00D4AA','#F59E0B','#4A90D9','#9B59B6','#E74C3C','#2ECC71','#E91E63','#3498DB','#1ABC9C','#D35400','#8E44AD','#FF5722','#27AE60','#C0392B'];
+  document.getElementById('genreGrid').innerHTML = GENRES.map((g, i) => `
+    <div onclick="navigate('catalog');setTimeout(()=>{document.getElementById('filterGenre').value='${g}';filterCatalog()},100)" class="glass rounded-xl p-4 text-center cursor-pointer hover:scale-105 transition" style="border-left:3px solid ${genreColors[i]}">
+      <div class="font-heading font-semibold text-sm">${g}</div>
+      <div class="text-xs text-dim mt-1">${Math.floor(Math.random()*50)+10} titles</div>
+    </div>
+  `).join('');
+}
+
+// ===========================
+// Anime Detail Page
+// ===========================
+function showAnimeDetail(id) {
+  const a = ANIME_DATA.find(x => x.id === id);
+  if (!a) return;
+  state.selectedAnime = a;
+  const eps = EPISODES_DATA.filter(e => e.animeId === id);
+  const recs = ANIME_DATA.filter(x => x.id !== id && x.genre.some(g => a.genre.includes(g))).slice(0,6);
+
+  document.getElementById('detailContent').innerHTML = `
+    <!-- Banner -->
+    <div class="relative h-[50vh] md:h-[60vh]">
+      <img src="https://picsum.photos/seed/${a.banner}/1920/800" class="w-full h-full object-cover">
+      <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/60 to-transparent"></div>
+      <button onclick="navigate('home')" class="absolute top-6 left-6 glass w-10 h-10 rounded-full flex items-center justify-center text-white hover:bg-accent transition z-10"><i class="fa-solid fa-arrow-left"></i></button>
+    </div>
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8 -mt-32 relative z-10">
+      <div class="flex flex-col md:flex-row gap-8">
+        <!-- Poster -->
+        <div class="flex-shrink-0">
+          <img src="https://picsum.photos/seed/${a.img}/300/420" class="w-48 md:w-56 rounded-2xl shadow-2xl border-2 border-white/10">
+        </div>
+        <!-- Info -->
+        <div class="flex-1 pt-4 md:pt-16">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="tag">${a.status}</span>
+            ${a.genre.map(g => `<span class="text-xs text-dim bg-white/5 px-2 py-0.5 rounded-md">${g}</span>`).join('')}
+          </div>
+          <h1 class="font-heading font-bold text-3xl md:text-5xl mb-1">${a.title}</h1>
+          <p class="text-dim text-lg mb-4">${a.titleJp}</p>
+          <div class="flex flex-wrap items-center gap-4 mb-4 text-sm">
+            <span class="flex items-center gap-1 text-yellow-400 font-bold"><i class="fa-solid fa-star"></i> ${a.rating}</span>
+            <span class="text-dim"><i class="fa-solid fa-film mr-1"></i>${a.studio}</span>
+            <span class="text-dim"><i class="fa-solid fa-calendar mr-1"></i>${a.year}</span>
+            <span class="text-dim"><i class="fa-solid fa-tv mr-1"></i>${a.currentEp}/${a.episodes} Episodes</span>
+            <span class="text-dim"><i class="fa-solid fa-eye mr-1"></i>${(a.views/1000000).toFixed(1)}M views</span>
+          </div>
+          <p class="text-dim leading-relaxed max-w-2xl mb-6">${a.desc}</p>
+          <div class="flex items-center gap-3 mb-8">
+            <button onclick="navigate('player',{animeId:${a.id},ep:1})" class="btn-glow px-8 py-3 rounded-xl text-white font-semibold flex items-center gap-2"><i class="fa-solid fa-play"></i> Watch Now</button>
+            <button onclick="toggleWatchlist(${a.id})" class="px-6 py-3 rounded-xl bg-white/10 border border-white/10 text-white font-medium hover:bg-white/20 transition flex items-center gap-2"><i class="fa-solid fa-bookmark"></i> Watchlist</button>
+            <button onclick="toggleFav(${a.id})" class="px-6 py-3 rounded-xl bg-white/10 border border-white/10 text-white font-medium hover:bg-white/20 transition flex items-center gap-2"><i class="fa-solid fa-heart"></i> Favorite</button>
+          </div>
+        </div>
+      </div>
+      <!-- Episodes -->
+      <div class="mt-8">
+        <h2 class="font-heading font-bold text-xl mb-4">Episodes</h2>
+        <div class="grid gap-2">
+          ${eps.map(ep => `
+            <div onclick="navigate('player',{animeId:${a.id},ep:${ep.ep}})" class="glass rounded-xl p-4 flex items-center gap-4 cursor-pointer hover:bg-white/5 transition group">
+              <div class="w-12 h-12 rounded-lg flex items-center justify-center bg-white/5 text-dim group-hover:bg-accent group-hover:text-white transition flex-shrink-0">
+                <span class="font-bold text-sm">${String(ep.ep).padStart(2,'0')}</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="font-medium text-sm">${ep.title}</div>
+                <div class="text-xs text-dim">${ep.duration} min · ${ep.views.toLocaleString()} views</div>
+              </div>
+              <i class="fa-solid fa-play text-dim group-hover:text-accent transition"></i>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <!-- Reviews -->
+      <div class="mt-10">
+        <h2 class="font-heading font-bold text-xl mb-4">Reviews</h2>
+        <div class="space-y-4 mb-6">
+          <div class="glass rounded-xl p-5">
+            <div class="flex items-center gap-3 mb-3">
+              <img src="https://picsum.photos/seed/rev1/50/50" class="w-8 h-8 rounded-full">
+              <div><div class="text-sm font-semibold">SakuraWatcher</div><div class="text-xs text-dim">2 days ago</div></div>
+              <div class="ml-auto flex gap-0.5">${'<i class="fa-solid fa-star text-yellow-400 text-xs"></i>'.repeat(5)}</div>
+            </div>
+            <p class="text-sm text-dim">Absolutely incredible series. The animation quality is movie-level and the story keeps you hooked from episode one. A must-watch for any anime fan.</p>
+          </div>
+          <div class="glass rounded-xl p-5">
+            <div class="flex items-center gap-3 mb-3">
+              <img src="https://picsum.photos/seed/rev2/50/50" class="w-8 h-8 rounded-full">
+              <div><div class="text-sm font-semibold">MechaPilot77</div><div class="text-xs text-dim">5 days ago</div></div>
+              <div class="ml-auto flex gap-0.5">${'<i class="fa-solid fa-star text-yellow-400 text-xs"></i>'.repeat(4)}<i class="fa-solid fa-star text-dim text-xs"></i></div>
+            </div>
+            <p class="text-sm text-dim">Great action sequences and world-building. Some pacing issues in the middle episodes but the payoff is worth it.</p>
+          </div>
+        </div>
+        <!-- Add Review -->
+        <div class="glass rounded-xl p-5">
+          <h3 class="font-semibold text-sm mb-3">Write a Review</h3>
+          <div class="star-rating flex gap-1 mb-3">
+            ${[1,2,3,4,5].map(i => `<i class="fa-solid fa-star text-dim text-lg" onclick="this.parentElement.querySelectorAll('i').forEach((s,idx)=>s.classList.toggle('text-yellow-400',idx<${i}))"></i>`).join('')}
+          </div>
+          <textarea rows="3" placeholder="Share your thoughts..." class="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/10 text-white text-sm focus:outline-none focus:border-accent resize-none mb-3"></textarea>
+          <button onclick="showToast('Review submitted for approval!')" class="btn-glow px-6 py-2 rounded-xl text-white text-sm font-semibold">Submit Review</button>
+        </div>
+      </div>
+      <!-- Recommendations -->
+      <div class="mt-10 mb-16">
+        <h2 class="font-heading font-bold text-xl mb-4">You May Also Like</h2>
+        <div class="scroll-row">${recs.map(r => animeCard(r)).join('')}</div>
+      </div>
+    </div>`;
+}
+
+function toggleFav(id) {
+  const idx = state.favorites.indexOf(id);
+  if (idx > -1) { state.favorites.splice(idx, 1); showToast('Removed from favorites'); }
+  else { state.favorites.push(id); showToast('Added to favorites'); }
+}
+
+// ===========================
+// Video Player
+// ===========================
+function showPlayer(data) {
+  const a = ANIME_DATA.find(x => x.id === data.animeId);
+  if (!a) return;
+  const ep = data.ep || 1;
+
+  document.getElementById('playerContent').innerHTML = `
+    <div class="relative min-h-screen bg-black">
+      <!-- Video Area (模拟) -->
+      <div class="player-wrapper relative" style="aspect-ratio:16/9;max-height:80vh">
+        <img src="https://picsum.photos/seed/${a.img}play${ep}/1920/1080" class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+          <button onclick="togglePlay(this)" class="w-20 h-20 rounded-full bg-accent/80 flex items-center justify-center text-white text-3xl hover:bg-accent hover:scale-110 transition" id="playBtn">
+            <i class="fa-solid fa-play ml-1"></i>
+          </button>
+        </div>
+        <!-- Player Controls -->
+        <div class="player-control absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4">
+          <div class="w-full h-1 bg-white/20 rounded-full mb-3 cursor-pointer" onclick="seekVideo(event)">
+            <div class="h-full bg-accent rounded-full progress-bar" id="progressBar" style="width:35%"></div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+              <button onclick="togglePlay(document.getElementById('playBtn'))" class="text-white hover:text-accent transition"><i class="fa-solid fa-play"></i></button>
+              <button class="text-white hover:text-accent transition"><i class="fa-solid fa-backward-step"></i></button>
+              <button class="text-white hover:text-accent transition"><i class="fa-solid fa-forward-step"></i></button>
+              <span class="text-white text-sm">12:34 / 24:00</span>
+            </div>
+            <div class="flex items-center gap-4">
+              <select class="bg-transparent text-white text-sm border-none outline-none">
+                <option>1080p</option><option>720p</option><option>480p</option><option>360p</option>
+              </select>
+              <select class="bg-transparent text-white text-sm border-none outline-none">
+                <option>Sub</option><option>Dub</option>
+              </select>
+              <button class="text-white hover:text-accent transition text-sm">1x</button>
+              <button class="text-white hover:text-accent transition"><i class="fa-solid fa-closed-captioning"></i></button>
+              <button class="text-white hover:text-accent transition"><i class="fa-solid fa-volume-high"></i></button>
+              <button class="text-white hover:text-accent transition"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Episode Info -->
+      <div class="max-w-6xl mx-auto px-4 py-6">
+        <div class="flex flex-col lg:flex-row gap-6">
+          <div class="flex-1">
+            <h1 class="font-heading font-bold text-xl mb-1">${a.title}</h1>
+            <p class="text-dim text-sm mb-4">Episode ${ep} · ${a.genre.join(', ')}</p>
+            <!-- Skip Intro Button -->
+            <button onclick="showToast('Intro skipped')" class="mb-4 px-4 py-2 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition flex items-center gap-2"><i class="fa-solid fa-forward"></i> Skip Intro</button>
+            <!-- Episode List -->
+            <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 mb-6">
+              ${Array.from({length:a.currentEp},(_, i) => `<button onclick="navigate('player',{animeId:${a.id},ep:${i+1}})" class="py-2 rounded-lg text-sm font-medium transition ${i+1===ep ? 'bg-accent text-white' : 'bg-white/5 text-dim hover:bg-white/10'}">${i+1}</button>`).join('')}
+            </div>
+            <!-- Comments -->
+            <div class="space-y-3">
+              <h3 class="font-heading font-semibold">Comments</h3>
+              <div class="flex gap-3 mb-4">
+                <input type="text" placeholder="Add a comment..." class="flex-1 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-accent">
+                <button onclick="showToast('Comment posted!')" class="btn-glow px-4 py-2 rounded-xl text-white text-sm">Post</button>
+              </div>
+              <div class="space-y-3">
+                <div class="flex gap-3"><img src="https://picsum.photos/seed/c1/40/40" class="w-8 h-8 rounded-full"><div><div class="text-sm"><span class="font-semibold">NekoLover</span> <span class="text-dim text-xs">1h ago</span></div><p class="text-sm text-dim">This episode was insane! Can't wait for the next one.</p></div></div>
+                <div class="flex gap-3"><img src="https://picsum.photos/seed/c2/40/40" class="w-8 h-8 rounded-full"><div><div class="text-sm"><span class="font-semibold">SamuraiHeart</span> <span class="text-dim text-xs">3h ago</span></div><p class="text-sm text-dim">The animation in that fight scene was breathtaking.</p></div></div>
+              </div>
+            </div>
+          </div>
+          <!-- Sidebar: Related -->
+          <div class="lg:w-72">
+            <h3 class="font-heading font-semibold mb-3">Up Next</h3>
+            <div class="space-y-3">
+              ${ANIME_DATA.filter(x=>x.id!==a.id).slice(0,5).map(x => `
+                <div onclick="navigate('detail',${x.id})" class="flex gap-3 cursor-pointer group">
+                  <img src="https://picsum.photos/seed/${x.img}/160/90" class="w-28 h-16 rounded-lg object-cover">
+                  <div><div class="text-sm font-medium group-hover:text-accent transition">${x.title}</div><div class="text-xs text-dim">EP ${x.currentEp}</div></div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+let isPlaying = false;
+function togglePlay(btn) {
+  isPlaying = !isPlaying;
+  btn.innerHTML = isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play ml-1"></i>';
+  if (isPlaying) simulateProgress();
+}
+function simulateProgress() {
+  const bar = document.getElementById('progressBar');
+  if (!bar || !isPlaying) return;
+  let w = parseFloat(bar.style.width) || 35;
+  if (w < 100) { bar.style.width = (w + 0.5) + '%'; setTimeout(simulateProgress, 300); }
+}
+function seekVideo(e) {
+  const bar = document.getElementById('progressBar');
+  if (bar) bar.style.width = (e.offsetX / e.currentTarget.offsetWidth * 100) + '%';
+}
+
+// ===========================
+// Catalog Page
+// ===========================
+function initCatalog() {
+  const sel = document.getElementById('filterGenre');
+  if (sel.options.length <= 1) GENRES.forEach(g => { const o = document.createElement('option'); o.value = g; o.textContent = g; sel.appendChild(o); });
+  filterCatalog();
+}
+function filterCatalog() {
+  const genre = document.getElementById('filterGenre').value;
+  const year = document.getElementById('filterYear').value;
+  const status = document.getElementById('filterStatus').value;
+  const sort = document.getElementById('filterSort').value;
+  const search = (document.getElementById('filterSearch')?.value || '').toLowerCase();
+  let results = ANIME_DATA.filter(a => {
+    if (genre && !a.genre.includes(genre)) return false;
+    if (year && a.year !== parseInt(year)) return false;
+    if (status && a.status !== status) return false;
+    if (search && !a.title.toLowerCase().includes(search)) return false;
+    return true;
+  });
+  if (sort === 'rating') results.sort((a,b) => b.rating - a.rating);
+  else if (sort === 'title') results.sort((a,b) => a.title.localeCompare(b.title));
+  else if (sort === 'year') results.sort((a,b) => b.year - a.year);
+  document.getElementById('catalogGrid').innerHTML = results.map(a => animeCardSmall(a)).join('') || '<div class="col-span-full text-center text-dim py-12">No anime found matching your filters.</div>';
+}
+
+// ===========================
+// Schedule Page
+// ===========================
+function initSchedule() {
+  const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  document.getElementById('scheduleTabs').innerHTML = days.map((d,i) => `<button onclick="showScheduleDay(${i})" class="px-5 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition ${i===0 ? 'bg-accent text-white' : 'bg-white/5 text-dim hover:bg-white/10'}" data-day="${i}">${d}</button>`).join('');
+  showScheduleDay(0);
+}
+function showScheduleDay(day) {
+  document.querySelectorAll('[data-day]').forEach(b => b.className = parseInt(b.dataset.day)===day ? 'px-5 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition bg-accent text-white' : 'px-5 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition bg-white/5 text-dim hover:bg-white/10');
+  const airing = ANIME_DATA.filter(a => a.status === 'Airing');
+  const dayAnime = airing.filter((_, i) => i % 7 === day);
+  document.getElementById('scheduleContent').innerHTML = dayAnime.map(a => `
+    <div onclick="navigate('detail',${a.id})" class="glass rounded-xl p-4 flex items-center gap-4 mb-3 cursor-pointer hover:bg-white/5 transition">
+      <img src="https://picsum.photos/seed/${a.img}/100/140" class="w-16 h-22 rounded-lg object-cover">
+      <div class="flex-1">
+        <h3 class="font-semibold">${a.title}</h3>
+        <p class="text-sm text-dim">${a.genre.join(', ')}</p>
+        <p class="text-xs text-dim mt-1">Episode ${a.currentEp+1} · ${a.studio}</p>
+      </div>
+      <div class="text-right">
+        <div class="text-accent font-bold text-sm">18:00 JST</div>
+        <div class="text-xs text-dim">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][day]}</div>
+      </div>
+    </div>
+  `).join('') || '<div class="text-center text-dim py-12">No anime scheduled for this day.</div>';
+}
+
+// ===========================
+// Community Page
+// ===========================
+function initCommunity() {
+  const discussions = [
+    {user:'SakuraWatcher',title:'Best anime of 2024 so far?',replies:47,time:'2h ago',hot:true},
+    {user:'MechaPilot77',title:'Iron Vanguard Episode 16 Discussion',replies:23,time:'4h ago',hot:true},
+    {user:'IsekaiDreamer',title:'Unpopular opinion: Isekai is getting stale',replies:89,time:'6h ago',hot:true},
+    {user:'NekoLover',title:'Hanami Dreams made me cry for an hour',replies:15,time:'8h ago'},
+    {user:'QuantumViewer',title:'Best animation studios ranked 2024',replies:34,time:'12h ago'},
+  ];
+  document.getElementById('discussionList').innerHTML = discussions.map(d => `
+    <div class="glass rounded-xl p-5 mb-3 hover:bg-white/5 transition cursor-pointer">
+      <div class="flex items-start gap-3">
+        <img src="https://picsum.photos/seed/${d.user}/50/50" class="w-8 h-8 rounded-full">
+        <div class="flex-1">
+          <div class="flex items-center gap-2">
+            <span class="font-semibold text-sm">${d.user}</span>
+            ${d.hot ? '<span class="text-[10px] bg-accent/20 text-accent px-2 py-0.5 rounded-md">HOT</span>' : ''}
+            <span class="text-xs text-dim ml-auto">${d.time}</span>
+          </div>
+          <h3 class="font-medium mt-1">${d.title}</h3>
+          <div class="flex items-center gap-4 mt-2 text-xs text-dim">
+            <span><i class="fa-solid fa-comment mr-1"></i>${d.replies} replies</span>
+            <span><i class="fa-solid fa-heart mr-1"></i>${Math.floor(Math.random()*50)+5}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('trendingDiscussions').innerHTML = discussions.slice(0,3).map((d,i) => `
+    <div class="flex items-center gap-3 mb-3 pb-3 border-b border-white/5">
+      <span class="font-heading font-bold text-accent text-lg">${i+1}</span>
+      <div class="text-sm">${d.title}</div>
+    </div>
+  `).join('');
+  document.getElementById('topContributors').innerHTML = USERS_DATA.slice(0,5).map(u => `
+    <div class="flex items-center gap-3 mb-3">
+      <img src="https://picsum.photos/seed/${u.avatar}/50/50" class="w-8 h-8 rounded-full">
+      <div><div class="text-sm font-medium">${u.name}</div><div class="text-xs text-dim">${Math.floor(Math.random()*500)+50} posts</div></div>
+    </div>
+  `).join('');
+}
+function postDiscussion() {
+  const text = document.getElementById('communityPost').value;
+  if (!text.trim()) { showToast('Please write something first', 'error'); return; }
+  showToast('Discussion posted successfully!');
+  document.getElementById('communityPost').value = '';
+}
+
+// ===========================
+// Profile Page
+// ===========================
+function renderProfile() {
+  showProfileTab('watchlist');
+}
+function showProfileTab(tab) {
+  document.querySelectorAll('.profile-tab').forEach(b => {
+    b.className = b.dataset.tab === tab ? 'profile-tab px-5 py-2 rounded-xl text-sm font-medium bg-accent text-white' : 'profile-tab px-5 py-2 rounded-xl text-sm font-medium bg-white/5 text-dim';
+  });
+  const ids = tab === 'watchlist' ? state.watchlist : tab === 'favorites' ? state.favorites : state.history;
+  const list = ids.map(id => ANIME_DATA.find(a => a.id === id)).filter(Boolean);
+  document.getElementById('profileGrid').innerHTML = list.map(a => animeCardSmall(a)).join('') || '<div class="col-span-full text-center text-dim py-12">Nothing here yet.</div>';
+}
+
+// ===========================
+// Admin Panel
+// ===========================
+function showAdminTab(tab) {
+  document.querySelectorAll('.admin-panel').forEach(p => p.classList.add('hidden'));
+  const el = document.getElementById('admin-' + tab);
+  if (el) el.classList.remove('hidden');
+  document.querySelectorAll('.admin-sidebar-item').forEach(i => {
+    i.classList.toggle('active', i.dataset.admin === tab);
+    i.classList.toggle('text-dim', i.dataset.admin !== tab);
+  });
+  if (tab === 'analytics') initAnalyticsCharts();
+}
+
+function initAdminCharts() {
+  // 统计卡片
+  const stats = [
+    {label:'Total Users',value:'24.5K',icon:'fa-users',change:'+12%',color:'var(--accent2)'},
+    {label:'Total Anime',value:ANIME_DATA.length,icon:'fa-film',change:'+3',color:'var(--accent)'},
+    {label:'Total Episodes',value:EPISODES_DATA.length,icon:'fa-play',change:'+28',color:'#F59E0B'},
+    {label:'Daily Visitors',value:'8.2K',icon:'fa-eye',change:'+18%',color:'#4A90D9'},
+  ];
+  document.getElementById('adminStatCards').innerHTML = stats.map(s => `
+    <div class="glass rounded-2xl p-5">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:${s.color}20;color:${s.color}"><i class="fa-solid ${s.icon}"></i></div>
+        <span class="text-xs font-medium px-2 py-0.5 rounded-md" style="background:${s.color}15;color:${s.color}">${s.change}</span>
+      </div>
+      <div class="font-heading font-bold text-2xl">${s.value}</div>
+      <div class="text-dim text-sm">${s.label}</div>
+    </div>
+  `).join('');
+
+  // 图表
+  setTimeout(() => {
+    const ctx1 = document.getElementById('chartUserGrowth');
+    if (ctx1 && !ctx1._chartInit) {
+      ctx1._chartInit = true;
+      new Chart(ctx1, {
+        type: 'line',
+        data: {
+          labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+          datasets: [{
+            label: 'Users',
+            data: [1200,1800,2400,3100,3800,4500,5600,6800,8200,10500,13200,15500],
+            borderColor: '#FF2D55', backgroundColor: 'rgba(255,45,85,0.1)',
+            fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#FF2D55'
+          }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8892A4' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8892A4' } } } }
+      });
+    }
+    const ctx2 = document.getElementById('chartWatchTime');
+    if (ctx2 && !ctx2._chartInit) {
+      ctx2._chartInit = true;
+      new Chart(ctx2, {
+        type: 'bar',
+        data: {
+          labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+          datasets: [{
+            label: 'Hours',
+            data: [4200,3800,4500,4100,5200,7800,6500],
+            backgroundColor: ['#FF2D55','#FF2D55','#FF2D55','#FF2D55','#FF2D55','#00D4AA','#00D4AA'],
+            borderRadius: 8, barPercentage: 0.6
+          }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: '#8892A4' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8892A4' } } } }
+      });
+    }
+    const ctx3 = document.getElementById('chartGenres');
+    if (ctx3 && !ctx3._chartInit) {
+      ctx3._chartInit = true;
+      new Chart(ctx3, {
+        type: 'doughnut',
+        data: {
+          labels: ['Action','Romance','Comedy','Fantasy','Sci-Fi','Other'],
+          datasets: [{ data: [28,15,12,20,10,15], backgroundColor: ['#FF2D55','#FF69B4','#FBBF24','#00D4AA','#4A90D9','#8892A4'], borderWidth: 0 }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#8892A4', padding: 12 } } } }
+      });
+    }
+  }, 200);
+
+  // Top Anime
+  const topA = ANIME_DATA.slice().sort((a,b) => b.views - a.views).slice(0,5);
+  document.getElementById('adminTopAnime').innerHTML = topA.map((a,i) => `
+    <div class="flex items-center gap-3 mb-3">
+      <span class="font-heading font-bold text-accent w-6">${i+1}</span>
+      <img src="https://picsum.photos/seed/${a.img}/50/70" class="w-8 h-11 rounded object-cover">
+      <div class="flex-1 min-w-0"><div class="text-sm font-medium truncate">${a.title}</div><div class="text-xs text-dim">${(a.views/1000000).toFixed(1)}M views</div></div>
+    </div>
+  `).join('');
+
+  // Server Health
+  document.getElementById('serverHealth').innerHTML = [
+    {label:'CPU Usage',value:34,color:'var(--accent2)'},
+    {label:'Memory',value:62,color:'#F59E0B'},
+    {label:'Storage',value:48,color:'var(--accent)'},
+    {label:'Bandwidth',value:71,color:'#4A90D9'},
+  ].map(s => `
+    <div class="mb-4">
+      <div class="flex justify-between text-sm mb-1"><span class="text-dim">${s.label}</span><span style="color:${s.color}">${s.value}%</span></div>
+      <div class="w-full h-2 rounded-full bg-white/5"><div class="h-full rounded-full progress-bar" style="width:${s.value}%;background:${s.color}"></div></div>
+    </div>
+  `).join('');
+
+  // Recent Activity
+  const activities = [
+    {icon:'fa-user-plus',text:'New user QuantumViewer registered',time:'5 min ago',color:'var(--accent2)'},
+    {icon:'fa-play',text:'Episode 18 of Blade of Eternity published',time:'32 min ago',color:'var(--accent)'},
+    {icon:'fa-comment',text:'12 new comments awaiting moderation',time:'1 hour ago',color:'#F59E0B'},
+    {icon:'fa-flag',text:'Comment reported for spam detection',time:'2 hours ago',color:'#E63946'},
+    {icon:'fa-server',text:'CDN cache purged successfully',time:'3 hours ago',color:'#4A90D9'},
+  ];
+  document.getElementById('recentActivity').innerHTML = activities.map(a => `
+    <div class="flex items-center gap-4 py-3 border-b border-white/5 last:border-0">
+      <div class="w-9 h-9 rounded-lg flex items-center justify-center" style="background:${a.color}15;color:${a.color}"><i class="fa-solid ${a.icon} text-sm"></i></div>
+      <div class="flex-1"><div class="text-sm">${a.text}</div><div class="text-xs text-dim">${a.time}</div></div>
+    </div>
+  `).join('');
+
+  // Anime Table
+  document.getElementById('animeTableBody').innerHTML = ANIME_DATA.map(a => `
+    <tr class="border-b border-white/5 hover:bg-white/3 transition">
+      <td class="p-4"><div class="flex items-center gap-3"><img src="https://picsum.photos/seed/${a.img}/60/80" class="w-10 h-14 rounded-lg object-cover"><div><div class="font-medium text-sm">${a.title}</div><div class="text-xs text-dim">${a.studio}</div></div></div></td>
+      <td class="p-4 hidden md:table-cell text-dim text-sm">${a.genre.join(', ')}</td>
+      <td class="p-4 hidden md:table-cell text-sm">${a.currentEp}/${a.episodes}</td>
+      <td class="p-4 text-sm font-medium"><i class="fa-solid fa-star text-yellow-400 text-xs"></i> ${a.rating}</td>
+      <td class="p-4"><span class="text-xs px-2 py-0.5 rounded-md ${a.status==='Airing'?'bg-accent/20 text-accent':a.status==='Completed'?'bg-accent2/20 text-accent2':'bg-yellow-400/20 text-yellow-400'}">${a.status}</span></td>
+      <td class="p-4"><div class="flex gap-2"><button onclick="navigate('detail',${a.id})" class="text-dim hover:text-accent transition"><i class="fa-solid fa-eye"></i></button><button class="text-dim hover:text-yellow-400 transition"><i class="fa-solid fa-pen"></i></button><button class="text-dim hover:text-red-400 transition"><i class="fa-solid fa-trash"></i></button></div></td>
+    </tr>
+  `).join('');
+
+  // Episode Table
+  document.getElementById('episodeTableBody').innerHTML = EPISODES_DATA.slice(0,20).map(ep => `
+    <tr class="border-b border-white/5 hover:bg-white/3 transition">
+      <td class="p-4 text-sm font-medium">EP ${String(ep.ep).padStart(2,'0')}</td>
+      <td class="p-4 text-sm">${ep.animeTitle}</td>
+      <td class="p-4 hidden md:table-cell text-sm text-dim">${ep.duration} min</td>
+      <td class="p-4 text-sm text-dim">${ep.views.toLocaleString()}</td>
+      <td class="p-4"><span class="text-xs px-2 py-0.5 rounded-md bg-accent2/20 text-accent2">Published</span></td>
+      <td class="p-4"><div class="flex gap-2"><button class="text-dim hover:text-accent transition"><i class="fa-solid fa-eye"></i></button><button class="text-dim hover:text-yellow-400 transition"><i class="fa-solid fa-pen"></i></button></div></td>
+    </tr>
+  `).join('');
+
+  // User Table
+  document.getElementById('userTableBody').innerHTML = USERS_DATA.map(u => `
+    <tr class="border-b border-white/5 hover:bg-white/3 transition">
+      <td class="p-4"><div class="flex items-center gap-3"><img src="https://picsum.photos/seed/${u.avatar}/50/50" class="w-8 h-8 rounded-full"><span class="font-medium text-sm">${u.name}</span></div></td>
+      <td class="p-4 hidden md:table-cell text-sm text-dim">${u.email}</td>
+      <td class="p-4"><span class="text-xs px-2 py-0.5 rounded-md ${u.role==='Admin'?'bg-accent/20 text-accent':u.role==='Moderator'?'bg-yellow-400/20 text-yellow-400':'bg-white/5 text-dim'}">${u.role}</span></td>
+      <td class="p-4 hidden md:table-cell text-sm text-dim">${u.joined}</td>
+      <td class="p-4"><span class="text-xs px-2 py-0.5 rounded-md ${u.status==='Active'?'bg-accent2/20 text-accent2':u.status==='Suspended'?'bg-yellow-400/20 text-yellow-400':'bg-red-400/20 text-red-400'}">${u.status}</span></td>
+      <td class="p-4"><div class="flex gap-2"><button class="text-dim hover:text-accent transition"><i class="fa-solid fa-eye"></i></button><button onclick="showToast('User action applied')" class="text-dim hover:text-yellow-400 transition"><i class="fa-solid fa-ban"></i></button><button class="text-dim hover:text-red-400 transition"><i class="fa-solid fa-trash"></i></button></div></td>
+    </tr>
+  `).join('');
+
+  // Comment Moderation
+  document.getElementById('commentsModList').innerHTML = COMMENTS_DATA.filter(c => c.status === 'pending').map(c => `
+    <div class="glass rounded-xl p-4 flex items-start gap-4">
+      <img src="https://picsum.photos/seed/${c.user}/50/50" class="w-8 h-8 rounded-full">
+      <div class="flex-1">
+        <div class="flex items-center gap-2 mb-1"><span class="font-semibold text-sm">${c.user}</span><span class="text-xs text-dim">on ${c.anime} ${c.ep}</span>${c.reported?'<span class="text-xs bg-red-400/20 text-red-400 px-2 py-0.5 rounded-md">REPORTED</span>':''}</div>
+        <p class="text-sm text-dim">${c.text}</p>
+        <span class="text-xs text-dim">${c.time}</span>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="showToast('Comment approved')" class="w-8 h-8 rounded-lg bg-accent2/20 text-accent2 flex items-center justify-center hover:bg-accent2/30 transition"><i class="fa-solid fa-check text-xs"></i></button>
+        <button onclick="showToast('Comment rejected')" class="w-8 h-8 rounded-lg bg-red-400/20 text-red-400 flex items-center justify-center hover:bg-red-400/30 transition"><i class="fa-solid fa-xmark text-xs"></i></button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function initAnalyticsCharts() {
+  const aStats = [
+    {label:'Page Views',value:'2.4M',icon:'fa-eye',change:'+22%',color:'var(--accent)'},
+    {label:'Avg Session',value:'24 min',icon:'fa-clock',change:'+8%',color:'var(--accent2)'},
+    {label:'Bounce Rate',value:'32%',icon:'fa-arrow-right-from-bracket',change:'-5%',color:'#F59E0B'},
+    {label:'Revenue',value:'$48.2K',icon:'fa-dollar-sign',change:'+15%',color:'#4A90D9'},
+  ];
+  document.getElementById('analyticsStatCards').innerHTML = aStats.map(s => `
+    <div class="glass rounded-2xl p-5">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:${s.color}20;color:${s.color}"><i class="fa-solid ${s.icon}"></i></div>
+        <span class="text-xs font-medium px-2 py-0.5 rounded-md" style="background:${s.change.startsWith('-')?'#E63946':'var(--accent2)'}15;color:${s.change.startsWith('-')?'#E63946':'var(--accent2)'}">${s.change}</span>
+      </div>
+      <div class="font-heading font-bold text-2xl">${s.value}</div>
+      <div class="text-dim text-sm">${s.label}</div>
+    </div>
+  `).join('');
+
+  setTimeout(() => {
+    const ctx4 = document.getElementById('chartTraffic');
+    if (ctx4 && !ctx4._chartInit) {
+      ctx4._chartInit = true;
+      new Chart(ctx4, {
+        type: 'pie',
+        data: {
+          labels: ['Direct','Search','Social','Referral','Other'],
+          datasets: [{ data: [35,28,20,12,5], backgroundColor: ['#FF2D55','#00D4AA','#4A90D9','#F59E0B','#8892A4'], borderWidth: 0 }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#8892A4' } } } }
+      });
+    }
+    const ctx5 = document.getElementById('chartDevices');
+    if (ctx5 && !ctx5._chartInit) {
+      ctx5._chartInit = true;
+      new Chart(ctx5, {
+        type: 'doughnut',
+        data: {
+          labels: ['Desktop','Mobile','Tablet','Smart TV'],
+          datasets: [{ data: [42,38,12,8], backgroundColor: ['#FF2D55','#00D4AA','#F59E0B','#4A90D9'], borderWidth: 0 }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#8892A4' } } } }
+      });
+    }
+    const ctx6 = document.getElementById('chartGeo');
+    if (ctx6 && !ctx6._chartInit) {
+      ctx6._chartInit = true;
+      new Chart(ctx6, {
+        type: 'bar',
+        data: {
+          labels: ['US','JP','DE','BR','UK','FR','IN','CA','AU','PH'],
+          datasets: [{ label: 'Visitors', data: [4500,3800,2100,1800,1600,1400,1200,900,800,700], backgroundColor: '#FF2D55', borderRadius: 6, barPercentage: 0.5 }]
+        },
+        options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8892A4' } }, y: { grid: { display: false }, ticks: { color: '#8892A4' } } } }
+      });
+    }
+  }, 200);
+}
+
+function showAddAnimeForm() {
+  showToast('Add Anime form would open here — feature ready for backend integration', 'info');
+}
+
+// ===========================
+// 导航栏滚动效果
+// ===========================
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('mainNav');
+  if (window.scrollY > 50) {
+    nav.style.background = 'rgba(10,14,23,0.9)';
+    nav.style.backdropFilter = 'blur(20px)';
+    nav.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+  } else {
+    nav.style.background = 'transparent';
+    nav.style.backdropFilter = 'none';
+    nav.style.borderBottom = 'none';
+  }
+});
+
+// ===========================
+// 初始化
+// ===========================
+document.addEventListener('DOMContentLoaded', () => {
+  initParticles();
+  initHome();
+});
+</script>
+</body>
+</html>
